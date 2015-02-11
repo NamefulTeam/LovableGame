@@ -1,4 +1,8 @@
 function love.load()
+	KeyConfig = {}
+	KeyConfig.left = 'left'
+	KeyConfig.right = 'right'
+
 	screen = love.filesystem.load('test.lua')()
 	screen.load()
 end
