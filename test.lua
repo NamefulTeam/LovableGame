@@ -13,13 +13,16 @@ function Test.load()
 	char.py = y
 	char.vx = 0
 	char.vy = 0
-	char.max_vy = 1000
+	char.max_vy = 2000
 	char.walk_speed = 400
-	char.g = 70
+	char.jump_speed = 300
+	char.g = 300
 	char.width = 24
 	char.height = 42
 	char.flipped = false
 	char.draw_state = 'normal'
+	char.in_ground = false
+	char.in_ceiling = false
 	char.textures.cast_front = love.graphics.newImage('common/char-cast-front.png')
 	char.textures.cast_general = love.graphics.newImage('common/char-cast-general.png')
 	char.textures.dead = love.graphics.newImage('common/char-dead.png')
@@ -37,10 +40,17 @@ function Test.load()
 
 	map = {}
 	map.ground = {}
-	table.insert(map.ground, make_ground(0, 200, 'spring_grass'))
-	table.insert(map.ground, make_ground(32, 200, 'spring_grass'))
-	table.insert(map.ground, make_ground(64, 200, 'spring_grass'))
-	table.insert(map.ground, make_ground(96, 250, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 0, 200, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 1, 200, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 2, 200, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 3, 250, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 4, 254, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 5, 250, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 6, 245, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 7, 240, 'spring_grass'))
+
+	table.insert(map.ground, make_ground(32 * 4, 100, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 5, 100, 'spring_grass'))
 end
 
 function Test.draw()
@@ -107,10 +117,18 @@ function update_sprite(sprite, dt)
 		sprite.x = sprite.x + sprite.walk_speed * dt
 	end
 
+	local can_jump = sprite.in_ground
+	if love.keyboard.isDown(KeyConfig.jump) and can_jump then
+		sprite.vy = -sprite.jump_speed
+	end
+
 	check_collisions_with_ground(sprite)
 end
 
 function check_collisions_with_ground(sprite)
+	sprite.in_ground = false
+	sprite.in_ceiling = false
+
 	for key, value in pairs(map.ground) do
 		if check_collision_with_ground(sprite, value) then
 			-- Fix character position and speed
@@ -126,10 +144,12 @@ function perform_ground_collision(sprite, tile)
 		-- Going down
 		sprite.y = tile.y + ground.yoffsets[tile.tile] - sprite.height
 		sprite.vy = 0
+		sprite.in_ground = true
 	elseif sprite.y < sprite.py then
 		-- Going up
 		sprite.y = tile.y + ground.height
 		sprite.vy = 0
+		sprite.in_ceiling = true
 	end
 
 	if sprite.x < sprite.px then

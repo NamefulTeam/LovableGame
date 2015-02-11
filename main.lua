@@ -2,6 +2,7 @@ function love.load()
 	KeyConfig = {}
 	KeyConfig.left = 'left'
 	KeyConfig.right = 'right'
+	KeyConfig.jump = ' '
 
 	screen = love.filesystem.load('test.lua')()
 	screen.load()
