@@ -13,13 +13,21 @@ function Test.load()
 	char.py = y
 	char.vx = 0
 	char.vy = 0
+	char.jump_cooldown_state = 0
+	char.jump_key_active_last_frame = false
+	char.jump_cooldown = 1
 	char.max_vy = 2000
-	char.walk_speed = 400
+	char.x_friction_threshold = 50
+	char.x_friction = 0.01
+	char.walk_speed = 300
 	char.jump_speed = 300
-	char.g = 300
+	char.wall_jump_xspeed = 500
+	char.wall_jump_yspeed = 300
+	char.g = 500
 	char.width = 24
 	char.height = 42
 	char.flipped = false
+	char.base_state = 'normal'
 	char.draw_state = 'normal'
 	char.in_ground = false
 	char.in_ceiling = false
@@ -97,9 +105,20 @@ function update_sprite(sprite, dt)
 	sprite.px = sprite.x
 	sprite.py = sprite.y
 
+	if sprite.jump_cooldown_state <= dt then
+		sprite.jump_cooldown_state = 0
+	else
+		sprite.jump_cooldown_state = sprite.jump_cooldown_state - dt
+	end
+
 	sprite.x = sprite.x + sprite.vx * dt
 	sprite.y = sprite.y + sprite.vy * dt
 
+	if sprite.vx > sprite.x_friction_threshold or sprite.vx < -sprite.x_friction_threshold then
+		sprite.vx = sprite.vx * (1 - sprite.x_friction)
+	else
+		sprite.vx = 0
+	end
 	sprite.vy = sprite.vy + sprite.g * dt
 
 	if sprite.vy > sprite.max_vy then
@@ -125,13 +144,50 @@ function update_sprite(sprite, dt)
 		sprite.x = sprite.x + sprite.walk_speed * dt
 	end
 
-	-- Fix can_jump so mid-air jumps aren't possible.
-	local can_jump = true
+	local can_jump = can_jump_up(sprite)
+	sprite.can_wall_jump_left = not can_jump and can_wall_jump_left(sprite)
+	sprite.can_wall_jump_right = not can_jump and can_wall_jump_right(sprite)
+
 	if love.keyboard.isDown(KeyConfig.jump) then
-		sprite.vy = -sprite.jump_speed
+		if sprite.jump_cooldown_state == 0 and not char.jump_key_active_last_frame then
+			if can_jump then
+				sprite.vy = -sprite.jump_speed
+				sprite.y = sprite.y
+				sprite.jump_cooldown_state = sprite.jump_cooldown
+			elseif sprite.can_wall_jump_left then
+				sprite.vx = -sprite.wall_jump_xspeed
+				sprite.vy = -sprite.wall_jump_yspeed
+				sprite.jump_cooldown_state = sprite.jump_cooldown
+			elseif sprite.can_wall_jump_right then
+				sprite.vx = sprite.wall_jump_xspeed
+				sprite.vy = -sprite.wall_jump_yspeed
+				sprite.jump_cooldown_state = sprite.jump_cooldown
+			end
+		end
+
+		char.jump_key_active_last_frame = true
+	else
+		char.jump_key_active_last_frame = false
 	end
 
 	check_collisions_with_ground(sprite)
+end
+
+function can_jump_up(sprite)
+	return has_collisions_at_position(sprite.x, sprite.y + 1, sprite)
+end
+
+-- For whenever we add reverse gravity
+function can_jump_down(sprite)
+	return has_collisions_at_position(sprite.x, sprite.y - 1, sprite)
+end
+
+function can_wall_jump_left(sprite)
+	return has_collisions_at_position(sprite.x + 1, sprite.y, sprite)
+end
+
+function can_wall_jump_right(sprite)
+	return has_collisions_at_position(sprite.x - 1, sprite.y, sprite)
 end
 
 function check_collisions_with_ground(sprite)
@@ -220,6 +276,12 @@ function perform_ground_collision(sprite, tile)
 	end
 
 	if fix_x then
+		if sprite.vx > 0 and sprite.x > proposed_x then
+			sprite.vx = 0
+		elseif sprite.vx < 0 and sprite.y < proposed_y then
+			sprite.vx = 0
+		end
+
 		sprite.x = proposed_x
 	end
 
