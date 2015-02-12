@@ -135,93 +135,15 @@ function update_sprite(sprite, dt)
 end
 
 function check_collisions_with_ground(sprite)
-	local solution = {
-		min_x = -math.huge,
-		max_x = math.huge,
-		min_y = -math.huge,
-		max_y = math.huge
-	}
-
 	-- Calculate constraints
 	for key, value in pairs(map.ground) do
 		if check_collision_with_ground(sprite.x, sprite.y, sprite, value) then
 			-- Fix character position and speed
-			perform_ground_collision(sprite, value, solution)
+			perform_ground_collision(sprite, value)
 		end
 	end
 
-	if --min_x == -math.huge and max_x == math.huge and
-		solution.min_y == -math.huge and solution.max_y == math.huge then
-
-		-- No collisions
-		return
-
-	end
-
-	-- Actually decide where to place sprite
-	local valid_solutions = {}
-
-	-- There are 8 possible adjustments (north, south, west, east and the corners)
-	-- Let's try them all
-	for x_adjustment = -1,1 do
-		for y_adjustment = -1,1 do
-			if not (x_adjustment == 0 and y_adjustment == 0) then
-				if (not (x_adjustment < 0) or solution.min_x > -math.huge) and
-					(not (x_adjustment > 0) or solution.max_x < math.huge) and
-					(not (y_adjustment < 0) or solution.min_y > -math.huge) and
-					(not (y_adjustment > 0) or solution.max_y < math.huge) then
-
-					-- So far, so good. This adjustment "makes sense".
-					-- If it is also valid (doesn't lead to a filled position), then we'll add it to the list
-
-					local actual_x = sprite.x
-					if x_adjustment < 0 then actual_x = solution.min_x end
-					if x_adjustment > 0 then actual_x = solution.max_x end
-
-					local actual_y = sprite.y
-					if y_adjustment < 0 then actual_y = solution.min_y end
-					if y_adjustment > 0 then actual_y = solution.max_y end
-
-					assert(actual_x < math.huge)
-					assert(actual_x > -math.huge)
-					assert(actual_y < math.huge)
-					assert(actual_y > -math.huge)
-					table.insert(valid_solutions, {actual_x, actual_y, y_adjustment < 0, y_adjustment > 0})
-				end
-			end
-		end
-	end
-
-	if #valid_solutions == 0 then
-		-- Being smashed. Oops.
-		-- Die or something
-	else
-		local min_squared_adjustment = math.huge
-		local min_adjustment_index
-
-		for key, value in pairs(valid_solutions) do
-			local xdiff = value[1] - sprite.x
-			local ydiff = value[2] - sprite.y
-
-			local squared_adjustment = xdiff * xdiff + ydiff * ydiff
-			if squared_adjustment < min_squared_adjustment then
-				min_squared_adjustment = squared_adjustment
-				min_adjustment_index = key
-			end
-		end
-
-		assert(min_adjustment_index ~= nil)
-
-		-- Fix position
-		local chosen_position = valid_solutions[min_adjustment_index]
-		sprite.x = chosen_position[1]
-		sprite.y = chosen_position[2]
-		if chosen_position[3] and sprite.vy < 0 then
-			sprite.vy = 0
-		elseif chosen_position[4] and sprite.vy > 0 then
-			sprite.vy = 0
-		end
-	end
+	-- TODO: Check if character is being smashed
 end
 
 function try_collisions_at_position(tentative_x, tentative_y, sprite)
@@ -234,34 +156,77 @@ function try_collisions_at_position(tentative_x, tentative_y, sprite)
 	return false
 end
 
-function perform_ground_collision(sprite, tile, solution)
+function perform_ground_collision(sprite, tile)
 	local ground_yoffset = ground.yoffsets[tile.tile]
 
-	if sprite.y + sprite.height < tile.y + ground_yoffset + ground.height then
+	local sprite_centerx = sprite.x + sprite.width / 2
+	local sprite_centery = sprite.y + sprite.height / 2
+	local tile_centerx = tile.x + ground.width / 2
+	local tile_centery = tile.y + (ground.height + ground_yoffset) / 2
+	local diffx = sprite_centerx - tile_centerx
+	local diffy = sprite_centery - tile_centery
+
+	local angle = math.atan2(diffy, diffx)
+
+	local proposed_x = sprite.x
+	local proposed_y = sprite.y
+
+	if diffy < 0 then
 		-- Collision from upwards (usually hero is going down)
-		local proposed_y = tile.y + ground_yoffset - sprite.height + 1
-		solution.max_y = math.min(solution.max_y, proposed_y)
-	elseif sprite.y > tile.y then
+		proposed_y = tile.y + ground_yoffset - sprite.height
+	elseif diffy > 0 then
 		-- Collision from downwards (usually hero is going up)
-		local proposed_y = tile.y + ground.height
-		solution.min_y = math.max(solution.min_y, proposed_y)
+		proposed_y = tile.y + ground.height
 	end
 
-	if sprite.x < tile.x then
+	if diffx < 0 then
 		-- Collision from the left side of the tile (character is probably going right)
-		local proposed_x = tile.x - sprite.width + 1
-		solution.max_x = math.min(solution.max_x, proposed_x)
-	elseif sprite.x + sprite.width > tile.x then
+		proposed_x = tile.x - sprite.width
+	elseif diffx > 0 then
 		-- Collision from the right side of the tile (character is probably going left)
-		local proposed_x = tile.x + ground.width
-		solution.min_x = math.max(solution.min_x, proposed_x)
+		proposed_x = tile.x + ground.width
+	end
+
+	local fix_x = false
+	local fix_y = false
+
+	if (angle > math.pi / 4 and angle < 3 * math.pi / 4) or
+		(angle > -3 * math.pi / 4 and angle < -math.pi / 4) then
+		fix_y = true
+		print('fix_y')
+	else
+		fix_x = true
+		print('fix_x')
+	end
+
+	if fix_x or fix_y and try_collisions_at_position(sprite.x, proposed_y, sprite) then
+		sprite.x = proposed_x
+		fix_x = true
+	end
+	if fix_y or fix_x and try_collisions_at_position(proposed_x, sprite.y, sprite) then
+		sprite.y = proposed_y
+		fix_y = true
+	end
+
+	if fix_x then
+		sprite.x = proposed_x
+	end
+
+	if fix_y then
+		sprite.y = proposed_y
+
+		if sprite.vy > 0 and angle < 0 then
+			sprite.vy = 0
+		elseif sprite.vy < 0 and angle > 0 then
+			sprite.vy = 0
+		end
 	end
 end
 
 function check_collision_with_ground(sprite_x, sprite_y, sprite, tile)
-	return sprite_x <= tile.x + ground.width and
+	return sprite_x < tile.x + ground.width and
 		sprite_x + sprite.width > tile.x and
-		sprite_y <= tile.y + ground.height and
+		sprite_y < tile.y + ground.height and
 		sprite_y + sprite.height > tile.y + ground.yoffsets[tile.tile]
 end
 
