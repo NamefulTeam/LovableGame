@@ -56,8 +56,13 @@ function Test.load()
 	ground.textures.spring_deep = love.graphics.newImage('spring/ground-deep.png')
 	ground.yoffsets.spring_deep = 0
 
+	decorator_types = {}
+	decorator_types.wall = love.filesystem.load('spring/wall.lua')()
+
 	map = {}
 	map.ground = {}
+	map.decorations_back = {}
+	map.decorations_front = {}
 	table.insert(map.ground, make_ground(32 * 0, 110, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 0, 110 + 32, 'spring_deep'))
 	table.insert(map.ground, make_ground(32 * 0, 110 + 32 * 2, 'spring_deep'))
@@ -90,17 +95,9 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 9, 32 * 6, 'spring_deep'))
 	table.insert(map.ground, make_ground(32 * 9, 32 * 7, 'spring_deep'))
 	table.insert(map.ground, make_ground(32 * 9, 32 * 8, 'spring_deep'))
-end
 
-function Test.draw()
-	love.graphics.clear()
-
-	draw_sprite(char)
-	draw_map(map)
-end
-
-function Test.update(dt)
-	update_sprite(char, dt)
+	table.insert(map.decorations_back, make_decoration(0, 0, 'wall'))
+	table.insert(map.decorations_back, make_decoration(64, 0, 'wall'))
 end
 
 function make_ground(x, y, tile)
@@ -109,6 +106,40 @@ function make_ground(x, y, tile)
 		y = y,
 		tile = tile
 	}
+end
+
+function make_decoration(x, y, decorator_name)
+	local decoration_data = { x = x, y = y, decorator_name = decorator_name }
+
+	decorator_types[decorator_name].init(decoration_data)
+
+	return decoration_data
+end
+
+function Test.draw()
+	love.graphics.clear()
+
+	draw_decorations(map.decorations_back)
+
+	draw_sprite(char)
+	draw_map(map)
+
+	draw_decorations(map.decorations_front)
+end
+
+function Test.update(dt)
+	update_sprite(char, dt)
+
+	update_decorations(map.decorations_back, dt)
+	update_decorations(map.decorations_front, dt)
+end
+
+function draw_decorations(decoration_list)
+	for key, value in pairs(decoration_list) do
+		local decorator = decorator_types[value.decorator_name]
+
+		decorator.draw(value)
+	end
 end
 
 function draw_map(map)
@@ -122,6 +153,14 @@ function draw_sprite(sprite)
 	local ox = char.flipped and sprite.width or 0
 
 	love.graphics.draw(sprite.textures[sprite.state], sprite.quad, sprite.x, sprite.y, 0, xscale, 1, ox, 0)
+end
+
+function update_decorations(decoration_list, dt)
+	for key, value in pairs(decoration_list) do
+		local decorator = decorator_types[value.decorator_name]
+
+		decorator.update(value, map, dt)
+	end
 end
 
 function update_sprite(sprite, dt)
