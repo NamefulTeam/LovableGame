@@ -53,13 +53,16 @@ function Test.load()
 
 	ground.textures.spring_grass = love.graphics.newImage('spring/ground-grass.png')
 	ground.yoffsets.spring_grass = 3
+	ground.textures.spring_deep = love.graphics.newImage('spring/ground-deep.png')
+	ground.yoffsets.spring_deep = 0
 
 	map = {}
 	map.ground = {}
-	table.insert(map.ground, make_ground(32 * 0, 170, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 0, 150, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 0, 130, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 0, 110, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 0, 110 + 32, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 0, 110 + 32 * 2, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 0, 110 + 32 * 3, 'spring_deep'))
+
 	table.insert(map.ground, make_ground(32 * 1, 200, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 2, 200, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 3, 250, 'spring_grass'))
@@ -73,20 +76,20 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 5, 100, 'spring_grass'))
 
 	table.insert(map.ground, make_ground(32 * 8, 240, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 6, 120, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 6, 100, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 6, 80, 'spring_grass'))
+
 	table.insert(map.ground, make_ground(32 * 6, 60, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 6, 60 + 32, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 6, 60 + 32 * 2, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 6, 60 + 32 * 3, 'spring_deep'))
 
-	table.insert(map.ground, make_ground(32 * 9, 240, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 220, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 200, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 180, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 160, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 140, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 120, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 100, 'spring_grass'))
-
+	table.insert(map.ground, make_ground(32 * 9, 32 * 1, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 2, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 3, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 4, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 5, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 6, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 7, 'spring_deep'))
+	table.insert(map.ground, make_ground(32 * 9, 32 * 8, 'spring_deep'))
 end
 
 function Test.draw()
@@ -322,6 +325,8 @@ function perform_ground_collision(sprite, tile)
 		-- Can't move in either way
 		-- Try moving in both ways simultaneously
 		-- TODO: Is this even supposed to happen?
+
+		print('move both')
 
 		local can_move_both = not has_collisions_at_position(proposed_x, proposed_y, sprite)
 		if can_move_both then
