@@ -146,7 +146,7 @@ function check_collisions_with_ground(sprite)
 	-- TODO: Check if character is being smashed
 end
 
-function try_collisions_at_position(tentative_x, tentative_y, sprite)
+function has_collisions_at_position(tentative_x, tentative_y, sprite)
 	for key, value in pairs(map.ground) do
 		if check_collision_with_ground(tentative_x, tentative_y, sprite, value) then
 			return true
@@ -165,8 +165,6 @@ function perform_ground_collision(sprite, tile)
 	local tile_centery = tile.y + (ground.height + ground_yoffset) / 2
 	local diffx = sprite_centerx - tile_centerx
 	local diffy = sprite_centery - tile_centery
-
-	local angle = math.atan2(diffy, diffx)
 
 	local proposed_x = sprite.x
 	local proposed_y = sprite.y
@@ -187,25 +185,38 @@ function perform_ground_collision(sprite, tile)
 		proposed_x = tile.x + ground.width
 	end
 
+	local can_move_x = not has_collisions_at_position(proposed_x, sprite.py, sprite)
+	local can_move_y = not has_collisions_at_position(sprite.px, proposed_y, sprite)
+
+	local distance_x = proposed_x - sprite.x
+	local distance_y = proposed_y - sprite.y
+
+	local prefer_y =  distance_x * distance_x > distance_y * distance_y
+
 	local fix_x = false
 	local fix_y = false
 
-	if (angle > math.pi / 4 and angle < 3 * math.pi / 4) or
-		(angle > -3 * math.pi / 4 and angle < -math.pi / 4) then
-		fix_y = true
-		print('fix_y')
+	if can_move_y then
+		if prefer_y or not can_move_x then
+			fix_y = true
+		else
+			fix_x = true
+		end
+	elseif can_move_x then
+		fix_x = true
 	else
-		fix_x = true
-		print('fix_x')
-	end
+		-- Can't move in either way
+		-- Try moving in both ways simultaneously
+		-- TODO: Is this even supposed to happen?
 
-	if fix_x or fix_y and try_collisions_at_position(sprite.x, proposed_y, sprite) then
-		sprite.x = proposed_x
-		fix_x = true
-	end
-	if fix_y or fix_x and try_collisions_at_position(proposed_x, sprite.y, sprite) then
-		sprite.y = proposed_y
-		fix_y = true
+		local can_move_both = not has_collisions_at_position(proposed_x, proposed_y, sprite)
+		if can_move_both then
+			fix_x = true
+			fix_y = true
+		else
+			-- TODO: Handle this
+			assert(false, 'Collision panic')
+		end
 	end
 
 	if fix_x then
@@ -213,13 +224,13 @@ function perform_ground_collision(sprite, tile)
 	end
 
 	if fix_y then
-		sprite.y = proposed_y
-
-		if sprite.vy > 0 and angle < 0 then
+		if sprite.vy > 0 and sprite.y > proposed_y then
 			sprite.vy = 0
-		elseif sprite.vy < 0 and angle > 0 then
+		elseif sprite.vy < 0 and sprite.y < proposed_y then
 			sprite.vy = 0
 		end
+
+		sprite.y = proposed_y
 	end
 end
 
