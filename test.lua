@@ -6,35 +6,41 @@ function Test.load()
 	char = {}
 	char.textures = {}
 
+	-- Graphics setup
 	char.quad = love.graphics.newQuad(3, 2, 26, 42, 32, 48)
+
+	-- Variables
 	char.x = 32*4
 	char.y = 170
 	char.px = x
 	char.py = y
 	char.vx = 0
 	char.vy = 0
-	char.jump_cooldown_state = 0
 	char.jump_key_active_last_frame = false
-	char.jump_cooldown = 1
+	char.flipped = false
+	char.state = 'normal'
+	char.in_ground = false
+	char.in_ceiling = false
+
+	-- Constants
 	char.max_vy = 2000
-	char.x_friction_threshold = 50
-	char.x_friction = 0.01
-	char.walk_speed = 300
+	char.max_vx = 1000
+	char.x_friction_threshold = 10
+	char.x_friction = 0.1
+	char.walk_acceleration = 30
 	char.jump_speed = 300
-	char.wall_jump_xspeed = 500
-	char.wall_jump_yspeed = 300
+	char.wall_jump_xspeed = 900
+	char.wall_jump_yspeed = 200
 	char.g = 500
 	char.width = 24
 	char.height = 42
-	char.flipped = false
-	char.base_state = 'normal'
-	char.draw_state = 'normal'
-	char.in_ground = false
-	char.in_ceiling = false
+
+	-- Textures
 	char.textures.cast_front = love.graphics.newImage('common/char-cast-front.png')
 	char.textures.cast_general = love.graphics.newImage('common/char-cast-general.png')
 	char.textures.dead = love.graphics.newImage('common/char-dead.png')
 	char.textures.normal = love.graphics.newImage('common/char-normal.png')
+	char.textures.grab_wall = love.graphics.newImage('common/char-grab-wall.png')
 
 	ground = {}
 	ground.width = 32
@@ -59,13 +65,25 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 5, 250, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 6, 245, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 7, 240, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 8, 240, 'spring_grass'))
 
 	table.insert(map.ground, make_ground(32 * 4, 100, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 5, 100, 'spring_grass'))
 
+	table.insert(map.ground, make_ground(32 * 8, 240, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 6, 120, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 6, 100, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 6, 80, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 6, 60, 'spring_grass'))
+
+	table.insert(map.ground, make_ground(32 * 9, 240, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 220, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 200, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 180, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 160, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 140, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 120, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 9, 100, 'spring_grass'))
 
 end
 
@@ -98,18 +116,12 @@ function draw_sprite(sprite)
 	local xscale = char.flipped and -1 or 1
 	local ox = char.flipped and sprite.width or 0
 
-	love.graphics.draw(sprite.textures[sprite.draw_state], sprite.quad, sprite.x, sprite.y, 0, xscale, 1, ox, 0)
+	love.graphics.draw(sprite.textures[sprite.state], sprite.quad, sprite.x, sprite.y, 0, xscale, 1, ox, 0)
 end
 
 function update_sprite(sprite, dt)
 	sprite.px = sprite.x
 	sprite.py = sprite.y
-
-	if sprite.jump_cooldown_state <= dt then
-		sprite.jump_cooldown_state = 0
-	else
-		sprite.jump_cooldown_state = sprite.jump_cooldown_state - dt
-	end
 
 	sprite.x = sprite.x + sprite.vx * dt
 	sprite.y = sprite.y + sprite.vy * dt
@@ -123,9 +135,13 @@ function update_sprite(sprite, dt)
 
 	if sprite.vy > sprite.max_vy then
 		sprite.vy = sprite.max_vy
-	end
-	if sprite.vy < -sprite.max_vy then
+	elseif sprite.vy < -sprite.max_vy then
 		sprite.vy = -sprite.max_vy
+	end
+	if sprite.vx > sprite.max_vx then
+		sprite.vx = sprite.max_vx
+	elseif sprite.vx < -sprite.max_vx then
+		sprite.vx = -sprite.max_vx
 	end
 
 	local direction = 0
@@ -138,39 +154,72 @@ function update_sprite(sprite, dt)
 
 	if direction < 0 then
 		sprite.flipped = true
-		sprite.x = sprite.x - sprite.walk_speed * dt
+		sprite.vx = sprite.vx - sprite.walk_acceleration
 	elseif direction > 0 then
 		sprite.flipped = false
-		sprite.x = sprite.x + sprite.walk_speed * dt
-	end
-
-	local can_jump = can_jump_up(sprite)
-	sprite.can_wall_jump_left = not can_jump and can_wall_jump_left(sprite)
-	sprite.can_wall_jump_right = not can_jump and can_wall_jump_right(sprite)
-
-	if love.keyboard.isDown(KeyConfig.jump) then
-		if sprite.jump_cooldown_state == 0 and not char.jump_key_active_last_frame then
-			if can_jump then
-				sprite.vy = -sprite.jump_speed
-				sprite.y = sprite.y
-				sprite.jump_cooldown_state = sprite.jump_cooldown
-			elseif sprite.can_wall_jump_left then
-				sprite.vx = -sprite.wall_jump_xspeed
-				sprite.vy = -sprite.wall_jump_yspeed
-				sprite.jump_cooldown_state = sprite.jump_cooldown
-			elseif sprite.can_wall_jump_right then
-				sprite.vx = sprite.wall_jump_xspeed
-				sprite.vy = -sprite.wall_jump_yspeed
-				sprite.jump_cooldown_state = sprite.jump_cooldown
-			end
-		end
-
-		char.jump_key_active_last_frame = true
-	else
-		char.jump_key_active_last_frame = false
+		sprite.vx = sprite.vx + sprite.walk_acceleration
 	end
 
 	check_collisions_with_ground(sprite)
+
+	local can_jump = can_jump_up(sprite)
+	local can_wall_jump_left = not can_jump and can_wall_jump_left(sprite)
+	local can_wall_jump_right = not can_jump and can_wall_jump_right(sprite)
+
+	local jump_key_active = love.keyboard.isDown(KeyConfig.jump)
+
+	if sprite.state == 'normal' then
+		if not char.jump_key_active_last_frame and jump_key_active then
+			if can_wall_jump_left then
+				sprite.state = 'grab_wall'
+				sprite.flipped = true
+			elseif can_wall_jump_right then
+				sprite.state = 'grab_wall'
+				sprite.flipped = false
+			elseif can_jump then
+				sprite.vy = -sprite.jump_speed
+				sprite.y = sprite.y
+				sprite.jump_cooldown_state = sprite.jump_cooldown
+			end
+		end
+	elseif sprite.state == 'grab_wall' then
+		if not jump_key_active then
+			if sprite.flipped then
+				-- Jump to the left
+				sprite.vx = -sprite.wall_jump_xspeed
+				sprite.vy = -sprite.wall_jump_yspeed
+				sprite.jump_cooldown_state = sprite.jump_cooldown
+				sprite.state = 'normal'
+			else
+				-- Jump to the right
+				sprite.vx = sprite.wall_jump_xspeed
+				sprite.vy = -sprite.wall_jump_yspeed
+				sprite.jump_cooldown_state = sprite.jump_cooldown
+				sprite.state = 'normal'
+			end
+		else
+			local disable_grab = false
+
+			if can_jump then
+				-- On ground
+				disable_grab = true
+			elseif sprite.flipped then
+				if not can_wall_jump_left then
+					disable_grab = true
+				end
+			else
+				if not can_wall_jump_right then
+					disable_grab = true
+				end
+			end
+
+			if disable_grab then
+				sprite.state = 'normal'
+			end
+		end
+	end
+
+	char.jump_key_active_last_frame = jump_key_active
 end
 
 function can_jump_up(sprite)
@@ -278,7 +327,7 @@ function perform_ground_collision(sprite, tile)
 	if fix_x then
 		if sprite.vx > 0 and sprite.x > proposed_x then
 			sprite.vx = 0
-		elseif sprite.vx < 0 and sprite.y < proposed_y then
+		elseif sprite.vx < 0 and sprite.x < proposed_x then
 			sprite.vx = 0
 		end
 
