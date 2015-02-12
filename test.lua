@@ -25,6 +25,8 @@ function Test.load()
 	-- Constants
 	char.max_vy = 2000
 	char.max_vx = 1000
+	char.wall_fall_g_friction = 0.8 -- Relative to char.g
+	char.max_grab_fall_speed = 1000
 	char.x_friction_threshold = 10
 	char.x_friction = 0.1
 	char.walk_acceleration = 30
@@ -183,6 +185,13 @@ function update_sprite(sprite, dt)
 			end
 		end
 	elseif sprite.state == 'grab_wall' then
+		if sprite.vy > 0 then
+			sprite.vy = sprite.vy - sprite.g * sprite.wall_fall_g_friction * dt -- Counter G
+		end
+		if sprite.vy > sprite.max_grab_fall_speed then
+			sprite.vy = sprite.max_grab_fall_speed
+		end
+
 		if not jump_key_active then
 			if sprite.flipped then
 				-- Jump to the left
