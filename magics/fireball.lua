@@ -8,7 +8,7 @@ local collision_height = 16
 local draw_width = 24
 local draw_height = 24
 
-local total_cast_time = 2
+local total_cast_time = 1
 local speed = 200
 
 local rotation_time = 0.5
@@ -19,6 +19,7 @@ function finalize_cast(map, caster, magic_instance)
 
 	caster.prepared_magic = nil
 	caster.can_cast = true
+	caster.can_move = true
 
 	magic_instance.is_preparing = false
 	magic_instance.vx = magic_instance.direction * speed
@@ -69,6 +70,7 @@ function Fireball.cast(map, caster)
 	magic_instance.y = caster.y + offsety
 	magic_instance.width = collision_width
 	magic_instance.height = collision_height
+	magic_instance.element = 'fire'
 
 	magic_instance.caster = caster
 
@@ -83,6 +85,7 @@ function Fireball.cast(map, caster)
 	caster.state = 'cast_front'
 	caster.cast_time = total_cast_time
 	caster.can_cast = false
+	caster.can_move = false
 	caster.prepared_magic = magic_instance
 
 	table.insert(map.magics, magic_instance)

@@ -22,6 +22,7 @@ function Test.load()
 	char.magics = { 'fireball' }
 	char.active_magic = char.magics[1]
 	char.can_cast = true
+	char.can_move = true
 
 	-- Constants
 	char.max_vy = 2000
@@ -103,6 +104,8 @@ function Test.load()
 
 	table.insert(map.decorations_back, make_decoration(0, 0, 'wall'))
 	table.insert(map.decorations_back, make_decoration(64, 0, 'wall'))
+	table.insert(map.decorations_back, make_decoration(128, 128, 'wall'))
+	table.insert(map.decorations_back, make_decoration(128, 192, 'wall'))
 end
 
 function make_ground(x, y, tile)
@@ -174,6 +177,15 @@ function update_decorations(decoration_list, dt)
 	for key, value in pairs(decoration_list) do
 		local decorator = decorator_types[value.decorator_name]
 
+		for mkey, mvalue in pairs(map.magics) do
+			if check_collision_rect(value.x + value.sensitive_x, value.y + value.sensitive_y, value.sensitive_width, value.sensitive_height,
+				mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
+
+				decorator.handle_magic(value, mvalue, map)
+
+			end
+		end
+
 		decorator.update(value, map, dt)
 	end
 end
@@ -210,10 +222,10 @@ function update_sprite(sprite, dt)
 	end
 
 	local direction = 0
-	if love.keyboard.isDown(KeyConfig.left) then
+	if love.keyboard.isDown(KeyConfig.left) and sprite.can_move then
 		direction = direction - 1
 	end
-	if love.keyboard.isDown(KeyConfig.right) then
+	if love.keyboard.isDown(KeyConfig.right) and sprite.can_move then
 		direction = direction + 1
 	end
 
@@ -433,10 +445,17 @@ function perform_ground_collision(sprite, tile)
 end
 
 function check_collision_with_ground(sprite_x, sprite_y, sprite, tile)
-	return sprite_x < tile.x + ground.width and
-		sprite_x + sprite.width > tile.x and
-		sprite_y < tile.y + ground.height and
-		sprite_y + sprite.height > tile.y + ground.yoffsets[tile.tile]
+	local yoffset = ground.yoffsets[tile.tile]
+
+	return check_collision_rect(sprite_x, sprite_y, sprite.width, sprite.height,
+		tile.x, tile.y + yoffset, ground.width, ground.height - yoffset)
+end
+
+function check_collision_rect(x1, y1, w1, h1, x2, y2, w2, h2)
+	return x1 < x2 + w2 and
+		x1 + w1 > x2 and
+		y1 < y2 + h2 and
+		y1 + h1 > y2
 end
 
 return Test
