@@ -229,14 +229,6 @@ function update_sprite(sprite, dt)
 		direction = direction + 1
 	end
 
-	if direction < 0 then
-		sprite.flipped = true
-		sprite.vx = sprite.vx - sprite.walk_acceleration
-	elseif direction > 0 then
-		sprite.flipped = false
-		sprite.vx = sprite.vx + sprite.walk_acceleration
-	end
-
 	check_collisions_with_ground(sprite)
 
 	local can_jump = can_jump_up(sprite)
@@ -245,6 +237,18 @@ function update_sprite(sprite, dt)
 
 	local jump_key_active = love.keyboard.isDown(KeyConfig.jump)
 
+	if direction < 0 then
+		if not can_wall_jump_right then
+			sprite.flipped = true
+		end
+		sprite.vx = sprite.vx - sprite.walk_acceleration
+	elseif direction > 0 then
+		if not can_wall_jump_left then
+			sprite.flipped = false
+		end
+		sprite.vx = sprite.vx + sprite.walk_acceleration
+	end
+
 	if sprite.can_cast and love.keyboard.isDown(KeyConfig.cast_spell) then
 		print(sprite.active_magic)
 		local magic = magics[sprite.active_magic]
@@ -252,14 +256,14 @@ function update_sprite(sprite, dt)
 	end
 
 	if sprite.state == 'normal' then
-		if not char.jump_key_active_last_frame and jump_key_active then
+		if not char.jump_key_active_last_frame then
 			if can_wall_jump_left then
 				sprite.state = 'grab_wall'
 				sprite.flipped = true
 			elseif can_wall_jump_right then
 				sprite.state = 'grab_wall'
 				sprite.flipped = false
-			elseif can_jump then
+			elseif can_jump and jump_key_active then
 				sprite.vy = -sprite.jump_speed
 				sprite.y = sprite.y
 				sprite.jump_cooldown_state = sprite.jump_cooldown
@@ -273,7 +277,7 @@ function update_sprite(sprite, dt)
 			sprite.vy = sprite.max_grab_fall_speed
 		end
 
-		if not jump_key_active then
+		if jump_key_active then
 			if sprite.flipped then
 				-- Jump to the left
 				sprite.vx = -sprite.wall_jump_xspeed
@@ -287,7 +291,9 @@ function update_sprite(sprite, dt)
 				sprite.jump_cooldown_state = sprite.jump_cooldown
 				sprite.state = 'normal'
 			end
-		else
+		elseif not can_wall_jump_left and not can_wall_jump_right then
+			sprite.state = 'normal'
+		--[[else
 			local disable_grab = false
 
 			if can_jump then
@@ -305,7 +311,7 @@ function update_sprite(sprite, dt)
 
 			if disable_grab then
 				sprite.state = 'normal'
-			end
+			end]]--
 		end
 	elseif sprite.state == 'cast_general' or sprite.state == 'cast_front' then
 		if sprite.cast_time <= dt then
