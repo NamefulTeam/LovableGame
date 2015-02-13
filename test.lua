@@ -19,8 +19,9 @@ function Test.load()
 	char.jump_key_active_last_frame = false
 	char.flipped = false
 	char.state = 'normal'
-	char.in_ground = false
-	char.in_ceiling = false
+	char.magics = { 'fireball' }
+	char.active_magic = char.magics[1]
+	char.can_cast = true
 
 	-- Constants
 	char.max_vy = 2000
@@ -59,7 +60,11 @@ function Test.load()
 	decorator_types = {}
 	decorator_types.wall = love.filesystem.load('spring/wall.lua')()
 
+	magics = {}
+	magics.fireball = love.filesystem.load('magics/fireball.lua')()
+
 	map = {}
+	map.magics = {}
 	map.ground = {}
 	map.decorations_back = {}
 	map.decorations_front = {}
@@ -124,6 +129,8 @@ function Test.draw()
 	draw_sprite(char)
 	draw_map(map)
 
+	draw_magics(map)
+
 	draw_decorations(map.decorations_front)
 end
 
@@ -132,6 +139,8 @@ function Test.update(dt)
 
 	update_decorations(map.decorations_back, dt)
 	update_decorations(map.decorations_front, dt)
+
+	update_magics(map, dt)
 end
 
 function draw_decorations(decoration_list)
@@ -148,6 +157,12 @@ function draw_map(map)
 	end
 end
 
+function draw_magics(map)
+	for key, value in pairs(map.magics) do
+		value.draw(map, value)
+	end
+end
+
 function draw_sprite(sprite)
 	local xscale = char.flipped and -1 or 1
 	local ox = char.flipped and sprite.width or 0
@@ -160,6 +175,12 @@ function update_decorations(decoration_list, dt)
 		local decorator = decorator_types[value.decorator_name]
 
 		decorator.update(value, map, dt)
+	end
+end
+
+function update_magics(map, dt)
+	for key, value in pairs(map.magics) do
+		value.update(map, value, dt)
 	end
 end
 
@@ -211,6 +232,12 @@ function update_sprite(sprite, dt)
 	local can_wall_jump_right = not can_jump and can_wall_jump_right(sprite)
 
 	local jump_key_active = love.keyboard.isDown(KeyConfig.jump)
+
+	if sprite.can_cast and love.keyboard.isDown(KeyConfig.cast_spell) then
+		print(sprite.active_magic)
+		local magic = magics[sprite.active_magic]
+		magic.cast(map, sprite)
+	end
 
 	if sprite.state == 'normal' then
 		if not char.jump_key_active_last_frame and jump_key_active then
@@ -267,6 +294,13 @@ function update_sprite(sprite, dt)
 			if disable_grab then
 				sprite.state = 'normal'
 			end
+		end
+	elseif sprite.state == 'cast_general' or sprite.state == 'cast_front' then
+		if sprite.cast_time <= dt then
+			sprite.cast_time = 0
+			sprite.prepared_magic.finalize_cast(map, sprite, sprite.prepared_magic)
+		else
+			sprite.cast_time = sprite.cast_time - dt
 		end
 	end
 

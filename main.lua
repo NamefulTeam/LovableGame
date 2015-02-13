@@ -3,7 +3,7 @@ function love.load()
 	KeyConfig.left = 'left'
 	KeyConfig.right = 'right'
 	KeyConfig.jump = 'z'
-	KeyConfig.magic = 'c'
+	KeyConfig.cast_spell = 'c'
 
 	screen = love.filesystem.load('test.lua')()
 	screen.load()
