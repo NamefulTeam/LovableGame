@@ -23,19 +23,20 @@ function Test.load()
 	char.active_magic = char.magics[1]
 	char.can_cast = true
 	char.can_move = true
+	char.move_cooldown_state = 0
 
 	-- Constants
-	char.max_vy = 2000
+	char.max_vy = 3000
 	char.max_vx = 1000
-	char.wall_fall_g_friction = 0.8 -- Relative to char.g
+	char.wall_fall_g_friction = 0.95 -- Relative to char.g
 	char.max_grab_fall_speed = 1000
 	char.x_friction_threshold = 10
-	char.x_friction = 0.1
+	char.x_friction = 0.12
 	char.walk_acceleration = 30
-	char.jump_speed = 300
-	char.wall_jump_xspeed = 900
-	char.wall_jump_yspeed = 200
-	char.g = 500
+	char.jump_speed = 330
+	char.wall_jump_xspeed = 800
+	char.wall_jump_yspeed = 400
+	char.g = 1100
 	char.width = 24
 	char.height = 42
 
@@ -60,6 +61,7 @@ function Test.load()
 
 	decorator_types = {}
 	decorator_types.wall = love.filesystem.load('spring/wall.lua')()
+	decorator_types.canister = love.filesystem.load('spring/canister.lua')()
 
 	magics = {}
 	magics.fireball = love.filesystem.load('magics/fireball.lua')()
@@ -77,16 +79,16 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 1, 200, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 2, 200, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 3, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 4, 254, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 4, 250, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 5, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 6, 245, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 7, 240, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 8, 240, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 6, 250, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 7, 250, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 8, 250, 'spring_deep'))
 
 	table.insert(map.ground, make_ground(32 * 4, 100, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 5, 100, 'spring_grass'))
 
-	table.insert(map.ground, make_ground(32 * 8, 240, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 8, 218, 'spring_grass'))
 
 	table.insert(map.ground, make_ground(32 * 6, 60, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 6, 60 + 32, 'spring_deep'))
@@ -102,8 +104,13 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 9, 32 * 7, 'spring_deep'))
 	table.insert(map.ground, make_ground(32 * 9, 32 * 8, 'spring_deep'))
 
+	table.insert(map.ground, make_ground(32 * 10, 32 * 8, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))
+
 	table.insert(map.decorations_back, make_decoration(0, 0, 'wall'))
+	table.insert(map.decorations_back, make_decoration(20, 20, 'canister'))
 	table.insert(map.decorations_back, make_decoration(64, 0, 'wall'))
+	table.insert(map.decorations_back, make_decoration(94, 20, 'canister'))
 	table.insert(map.decorations_back, make_decoration(128, 128, 'wall'))
 	table.insert(map.decorations_back, make_decoration(128, 192, 'wall'))
 end
@@ -119,7 +126,10 @@ end
 function make_decoration(x, y, decorator_name)
 	local decoration_data = { x = x, y = y, decorator_name = decorator_name }
 
-	decorator_types[decorator_name].init(decoration_data)
+	local decorator = decorator_types[decorator_name]
+	if decorator.init ~= nil then
+		decorator.init(decoration_data)
+	end
 
 	return decoration_data
 end
@@ -177,16 +187,20 @@ function update_decorations(decoration_list, dt)
 	for key, value in pairs(decoration_list) do
 		local decorator = decorator_types[value.decorator_name]
 
-		for mkey, mvalue in pairs(map.magics) do
-			if check_collision_rect(value.x + value.sensitive_x, value.y + value.sensitive_y, value.sensitive_width, value.sensitive_height,
-				mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
+		if decorator.enable_magic_collisions then
+			for mkey, mvalue in pairs(map.magics) do
+				if check_collision_rect(value.x + value.sensitive_x, value.y + value.sensitive_y, value.sensitive_width, value.sensitive_height,
+					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
 
-				decorator.handle_magic(value, mvalue, map)
+					decorator.handle_magic(value, mvalue, map)
 
+				end
 			end
 		end
 
-		decorator.update(value, map, dt)
+		if decorator.update ~= nil then
+			decorator.update(value, map, dt)
+		end
 	end
 end
 
@@ -266,7 +280,6 @@ function update_sprite(sprite, dt)
 			elseif can_jump and jump_key_active then
 				sprite.vy = -sprite.jump_speed
 				sprite.y = sprite.y
-				sprite.jump_cooldown_state = sprite.jump_cooldown
 			end
 		end
 	elseif sprite.state == 'grab_wall' then
@@ -282,36 +295,15 @@ function update_sprite(sprite, dt)
 				-- Jump to the left
 				sprite.vx = -sprite.wall_jump_xspeed
 				sprite.vy = -sprite.wall_jump_yspeed
-				sprite.jump_cooldown_state = sprite.jump_cooldown
 				sprite.state = 'normal'
 			else
 				-- Jump to the right
 				sprite.vx = sprite.wall_jump_xspeed
 				sprite.vy = -sprite.wall_jump_yspeed
-				sprite.jump_cooldown_state = sprite.jump_cooldown
 				sprite.state = 'normal'
 			end
 		elseif not can_wall_jump_left and not can_wall_jump_right then
 			sprite.state = 'normal'
-		--[[else
-			local disable_grab = false
-
-			if can_jump then
-				-- On ground
-				disable_grab = true
-			elseif sprite.flipped then
-				if not can_wall_jump_left then
-					disable_grab = true
-				end
-			else
-				if not can_wall_jump_right then
-					disable_grab = true
-				end
-			end
-
-			if disable_grab then
-				sprite.state = 'normal'
-			end]]--
 		end
 	elseif sprite.state == 'cast_general' or sprite.state == 'cast_front' then
 		if sprite.cast_time <= dt then

@@ -29,6 +29,8 @@ function update(map, magic_instance, dt)
 	magic_instance.total_time = magic_instance.total_time + dt
 
 	if magic_instance.is_preparing then
+		magic_instance.y = magic_instance.caster.y + get_offsety(magic_instance.caster)
+
 		magic_instance.cast_time = magic_instance.cast_time + dt
 		if magic_instance.cast_time >= total_cast_time then
 			magic_instance.cast_time = total_cast_time
@@ -44,20 +46,20 @@ function draw(map, magic_instance)
 	local scaled_draw_width = draw_width * scale
 	local scaled_draw_height = draw_height * scale
 
-	local offsetx = (collision_width - scaled_draw_width) / 2
-	local offsety = (collision_height - scaled_draw_height) / 2
+	local draw_offsetx = (collision_width - scaled_draw_width) / 2
+	local draw_offsety = (collision_height - scaled_draw_height) / 2
 
 	local rotation_angle = (magic_instance.total_time / rotation_time) % 1 * math.pi * 2
 
 	love.graphics.draw(texture, quad,
-		magic_instance.x + offsetx + scaled_draw_width / 2, magic_instance.y + offsety + scaled_draw_height / 2,
+		magic_instance.x + draw_offsetx + scaled_draw_width / 2, magic_instance.y + draw_offsety + scaled_draw_height / 2,
 		rotation_angle, scale, scale, draw_width / 2, draw_height / 2)
 end
 
 function Fireball.cast(map, caster)
 	local magic_instance = {}
 
-	local offsety = (caster.height - collision_height) / 2
+	local offsety = get_offsety(caster)
 
 	if caster.flipped then
 		magic_instance.x = caster.x - collision_width - 4
@@ -89,6 +91,12 @@ function Fireball.cast(map, caster)
 	caster.prepared_magic = magic_instance
 
 	table.insert(map.magics, magic_instance)
+end
+
+function get_offsety(caster)
+	local offsety = (caster.height - collision_height) / 2
+
+	return offsety
 end
 
 return Fireball
