@@ -6,6 +6,7 @@ Wall = require 'spring.wall'
 Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Fireball = require 'magics.fireball'
+local background = love.graphics.newImage("background.png")
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
@@ -116,15 +117,16 @@ function Test.draw()
 	camera:set()
 	camera.x = camera.x*camera.parallax
 	camera.y = camera.y*camera.parallax
-	draw_decorations(map.decorations_back)
+	love.graphics.draw(background,-800,-400)
 	camera:unset()
 	
 	--front layer
 	camera:set()
-	char:draw()
+	draw_decorations(map.decorations_back)
 	draw_map(map)
 	draw_magics(map)
 	draw_decorations(map.decorations_front)
+	char:draw()
 	camera:unset()
 end
 
