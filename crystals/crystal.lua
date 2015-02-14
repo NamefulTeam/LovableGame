@@ -13,8 +13,8 @@ function Crystal:init(width, height, magnet_distance, absorption_distance, value
 	self.texture = texture
 	self.max_rotation_speed = 1
 	self.rotation_acceleration = 0.1
-	self.friction = 0.2
-	self.accel = 250
+	self.friction = 0.05
+	self.accel = 1500
 end
 
 function Crystal:make_instance(x, y)
@@ -74,18 +74,10 @@ function Crystal:update(instance, map, dt)
 		local diffy = char_center_y - instance_center_y
 		local squared_distance = diffx * diffx + diffy * diffy
 
-		-- Try to predict where the particle will be, instead of where it is, to
-		-- ensure proper homing (as opposed to creating "orbits" around the character)
-		local diffx = char_center_x - instance_center_x
-		local diffy = char_center_y - instance_center_y
-
 		local angle = math.atan2(diffy, diffx)
 
-		instance.vx = instance.vx + math.cos(angle) * self.accel * dt
-		instance.vy = instance.vy + math.sin(angle) * self.accel * dt
-
-		instance.vx = instance.vx * math.pow(1 - self.friction, dt)
-		instance.vy = instance.vy * math.pow(1 - self.friction, dt)
+		instance.vx = instance.vx*(1 - self.friction) + math.cos(angle) * self.accel * dt
+		instance.vy = instance.vy*(1 - self.friction) + math.sin(angle) * self.accel * dt
 
 		instance.angle = instance.angle + instance.rotation_speed
 		if instance.rotation_speed + self.rotation_acceleration > self.max_rotation_speed then
