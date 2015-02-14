@@ -5,6 +5,7 @@ camera.scaleX = 1
 camera.scaleY = 1
 camera.rotation = 0
 camera.followSpeed = 0.1-- at 0 the camera will be static, at 1 the camera will be locked on the target
+camera.parallax = 0.9
 
 function camera:set()
   love.graphics.push()
@@ -57,4 +58,6 @@ function camera:follow(x, y)
     self.y = y
   end
 
+  self.x = self.x / camera.parallax
+  self.y = self.y / camera.parallax
 end

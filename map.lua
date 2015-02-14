@@ -77,18 +77,18 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))
 
 	map.decorations_back:insert_at_end(make_decoration(0, 0, 'wall'))
-	map.decorations_back:insert_at_end(make_decoration(20, 20, 'lamp'))
+	map.decorations_front:insert_at_end(make_decoration(20, 20, 'lamp'))
 	map.decorations_back:insert_at_end(make_decoration(64, 0, 'wall'))
-	map.decorations_back:insert_at_end(make_decoration(94, 20, 'lamp'))
+	map.decorations_front:insert_at_end(make_decoration(94, 20, 'lamp'))
 	map.decorations_back:insert_at_end(make_decoration(128, 128, 'wall'))
 	map.decorations_back:insert_at_end(make_decoration(128, 192, 'wall'))
 
 	for x = 140, 250, 10 do
-		map.decorations_back:insert_at_end(make_decoration(x, 230, 'dust'))
+		map.decorations_front:insert_at_end(make_decoration(x, 230, 'dust'))
 	end
 
 	for y = 40, 190, 10 do
-		map.decorations_back:insert_at_end(make_decoration(270, y, 'dust'))
+		map.decorations_front:insert_at_end(make_decoration(270, y, 'dust'))
 	end
 
 end
@@ -112,14 +112,20 @@ end
 function Test.draw()
 	love.graphics.clear()
 
+	--back layer
+	camera:set()
+	camera.x = camera.x*camera.parallax
+	camera.y = camera.y*camera.parallax
 	draw_decorations(map.decorations_back)
-
+	camera:unset()
+	
+	--front layer
+	camera:set()
 	char:draw()
 	draw_map(map)
-
 	draw_magics(map)
-
 	draw_decorations(map.decorations_front)
+	camera:unset()
 end
 
 function Test.update(dt)
