@@ -97,6 +97,8 @@ function MagicBallSpell:cast(map, caster)
 end
 
 function MagicBallSpell:init(texture, element)
+	print('MagicBallSpell:init')
+
 	self.texture = texture
 	self.element = element
 end

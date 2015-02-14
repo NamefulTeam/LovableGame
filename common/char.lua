@@ -8,7 +8,7 @@ Character.max_vx = 1000
 Character.wall_fall_g_friction = 0.95 -- Relative to char.g
 Character.max_grab_fall_speed = 1000
 Character.x_friction_threshold = 10
-Character.x_friction = 0.12
+Character.x_friction = 0.99
 Character.walk_acceleration = 30
 Character.jump_speed = 330
 Character.wall_jump_xspeed = 800
@@ -64,7 +64,7 @@ function Character:update(map, dt)
 	self.y = self.y + self.vy * dt
 
 	if self.vx > self.x_friction_threshold or self.vx < -self.x_friction_threshold then
-		self.vx = self.vx * (1 - self.x_friction)
+		self.vx = self.vx * math.pow(1 - self.x_friction, dt)
 	else
 		self.vx = 0
 	end
@@ -176,6 +176,10 @@ end
 
 function Character:can_wall_jump_right()
 	return Physics.has_collisions_at_position(map, self.x - 1, self.y, self)
+end
+
+function Character:get_center()
+	return self.x + self.width / 2, self.y + self.height / 2
 end
 
 return Character

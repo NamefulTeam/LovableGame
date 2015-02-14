@@ -1,7 +1,12 @@
 return function (base)
 	local builder_object = {}
 	
-	builder_object.init = function() end -- Default init method
+	builder_object.init = function()
+		-- Default init method
+		if base ~= nil then
+			base.init(self)
+		end
+	end
 
 	local function builder(caller_class, ...)
 		local object = {}

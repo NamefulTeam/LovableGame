@@ -18,6 +18,10 @@ local Lamp_offsety = 8
 
 local frame_time = 0.3
 
+function Lamp:init()
+	FieldObject.init(self)
+end
+
 function Lamp:make_instance(x, y)
 	local instance = FieldObject.make_instance(self, x, y)
 

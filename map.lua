@@ -1,6 +1,11 @@
 Test = {}
+LinkedList = require 'linked_list'
 Character = require 'common.char'
 Physics = require 'physics'
+Wall = require 'spring.wall'
+Lamp = require 'spring.lamp'
+Dust = require 'crystals.dust'
+Fireball = require 'magics.fireball'
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
@@ -20,19 +25,21 @@ function Test.load()
 	ground.yoffsets.spring_deep = 0
 
 	local decorator_types = {}
-	decorator_types.wall = love.filesystem.load('spring/wall.lua')()
-	decorator_types.lamp = love.filesystem.load('spring/lamp.lua')()
+	decorator_types.wall = Wall()
+	decorator_types.lamp = Lamp()
+	decorator_types.dust = Dust()
 
 	magics = {}
-	magics.fireball = (require ('magics/fireball'))()
+	magics.fireball = Fireball()
 
 	map = {}
+	map.chars = { char }
 	map.ground_info = ground
 	map.decorator_types = decorator_types
 	map.magics = {}
 	map.ground = {}
-	map.decorations_back = {}
-	map.decorations_front = {}
+	map.decorations_back = LinkedList()
+	map.decorations_front = LinkedList()
 	table.insert(map.ground, make_ground(32 * 0, 110, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 0, 110 + 32, 'spring_deep'))
 	table.insert(map.ground, make_ground(32 * 0, 110 + 32 * 2, 'spring_deep'))
@@ -69,12 +76,21 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 10, 32 * 8, 'spring_grass'))
 	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))
 
-	table.insert(map.decorations_back, make_decoration(0, 0, 'wall'))
-	table.insert(map.decorations_back, make_decoration(20, 20, 'lamp'))
-	table.insert(map.decorations_back, make_decoration(64, 0, 'wall'))
-	table.insert(map.decorations_back, make_decoration(94, 20, 'lamp'))
-	table.insert(map.decorations_back, make_decoration(128, 128, 'wall'))
-	table.insert(map.decorations_back, make_decoration(128, 192, 'wall'))
+	map.decorations_back:insert_at_end(make_decoration(0, 0, 'wall'))
+	map.decorations_back:insert_at_end(make_decoration(20, 20, 'lamp'))
+	map.decorations_back:insert_at_end(make_decoration(64, 0, 'wall'))
+	map.decorations_back:insert_at_end(make_decoration(94, 20, 'lamp'))
+	map.decorations_back:insert_at_end(make_decoration(128, 128, 'wall'))
+	map.decorations_back:insert_at_end(make_decoration(128, 192, 'wall'))
+
+	for x = 140, 250, 10 do
+		map.decorations_back:insert_at_end(make_decoration(x, 230, 'dust'))
+	end
+
+	for y = 40, 190, 10 do
+		map.decorations_back:insert_at_end(make_decoration(270, y, 'dust'))
+	end
+
 end
 
 function make_ground(x, y, tile)
@@ -115,11 +131,14 @@ function Test.update(dt)
 	update_magics(map, dt)
 end
 
-function draw_decorations(decoration_list)
-	for key, value in pairs(decoration_list) do
-		local decorator = map.decorator_types[value.decorator_name]
+function draw_decorations(instance_list)
+	local instance = instance_list.first
+	while instance ~= nil do
+		local decorator = map.decorator_types[instance.decorator_name]
 
-		decorator:draw(value)
+		decorator:draw(instance)
+
+		instance = instance.next
 	end
 end
 
@@ -136,21 +155,24 @@ function draw_magics(map)
 end
 
 function update_decorations(instance_list, dt)
-	for key, value in pairs(instance_list) do
-		local field_object = map.decorator_types[value.decorator_name]
+	local instance = instance_list.first
+	while instance ~= nil do
+		local field_object = map.decorator_types[instance.decorator_name]
 
 		if field_object.enable_magic_collisions then
 			for mkey, mvalue in pairs(map.magics) do
-				if Physics.check_collision_rect(value.x + value.sensitive_x, value.y + value.sensitive_y, value.sensitive_width, value.sensitive_height,
+				if Physics.check_collision_rect(instance.x + instance.sensitive_x, instance.y + instance.sensitive_y, instance.sensitive_width, instance.sensitive_height,
 					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
 
-					field_object:handle_magic(value, mvalue, map)
+					field_object:handle_magic(instance, mvalue, map)
 
 				end
 			end
 		end
 
-		field_object:update(value, map, dt)
+		field_object:update(instance, map, dt)
+
+		instance = instance.next
 	end
 end
 
