@@ -64,7 +64,7 @@ function Test.load()
 	decorator_types.canister = love.filesystem.load('spring/canister.lua')()
 
 	magics = {}
-	magics.fireball = love.filesystem.load('magics/fireball.lua')()
+	magics.fireball = (require ('magics/fireball'))()
 
 	map = {}
 	map.magics = {}
@@ -172,7 +172,7 @@ end
 
 function draw_magics(map)
 	for key, value in pairs(map.magics) do
-		value.draw(map, value)
+		value.magic:draw(map, value)
 	end
 end
 
@@ -206,7 +206,7 @@ end
 
 function update_magics(map, dt)
 	for key, value in pairs(map.magics) do
-		value.update(map, value, dt)
+		value.magic:update(map, value, dt)
 	end
 end
 
@@ -264,9 +264,8 @@ function update_sprite(sprite, dt)
 	end
 
 	if sprite.can_cast and love.keyboard.isDown(KeyConfig.cast_spell) then
-		print(sprite.active_magic)
 		local magic = magics[sprite.active_magic]
-		magic.cast(map, sprite)
+		magic:cast(map, sprite)
 	end
 
 	if sprite.state == 'normal' then
@@ -308,7 +307,7 @@ function update_sprite(sprite, dt)
 	elseif sprite.state == 'cast_general' or sprite.state == 'cast_front' then
 		if sprite.cast_time <= dt then
 			sprite.cast_time = 0
-			sprite.prepared_magic.finalize_cast(map, sprite, sprite.prepared_magic)
+			sprite.prepared_magic.magic:finalize_cast(map, sprite, sprite.prepared_magic)
 		else
 			sprite.cast_time = sprite.cast_time - dt
 		end

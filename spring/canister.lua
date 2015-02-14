@@ -25,10 +25,10 @@ function Canister.init(decoration)
 	decoration.sensitive_y = canister_offsety
 end
 
-function Canister.handle_magic(decoration, magic, map)
-	if magic.is_preparing then return end
-	
-	if magic.element == 'fire' then
+function Canister.handle_magic(decoration, magic_instance, map)
+	if magic_instance.is_preparing then return end
+
+	if magic_instance.magic.element == 'fire' then
 		decoration.lit = true
 	end
 end

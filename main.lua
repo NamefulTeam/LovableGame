@@ -5,7 +5,7 @@ function love.load()
 	KeyConfig.jump = 'z'
 	KeyConfig.cast_spell = 'c'
 
-	screen = love.filesystem.load('test.lua')()
+	screen = love.filesystem.load('map.lua')()
 	screen.load()
 end
 function love.draw()
