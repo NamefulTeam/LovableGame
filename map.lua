@@ -61,7 +61,7 @@ function Test.load()
 
 	decorator_types = {}
 	decorator_types.wall = love.filesystem.load('spring/wall.lua')()
-	decorator_types.canister = love.filesystem.load('spring/canister.lua')()
+	decorator_types.lamp = love.filesystem.load('spring/lamp.lua')()
 
 	magics = {}
 	magics.fireball = (require ('magics/fireball'))()
@@ -108,9 +108,9 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))
 
 	table.insert(map.decorations_back, make_decoration(0, 0, 'wall'))
-	table.insert(map.decorations_back, make_decoration(20, 20, 'canister'))
+	table.insert(map.decorations_back, make_decoration(20, 20, 'lamp'))
 	table.insert(map.decorations_back, make_decoration(64, 0, 'wall'))
-	table.insert(map.decorations_back, make_decoration(94, 20, 'canister'))
+	table.insert(map.decorations_back, make_decoration(94, 20, 'lamp'))
 	table.insert(map.decorations_back, make_decoration(128, 128, 'wall'))
 	table.insert(map.decorations_back, make_decoration(128, 192, 'wall'))
 end
