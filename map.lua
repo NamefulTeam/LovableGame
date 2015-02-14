@@ -125,6 +125,8 @@ end
 function Test.update(dt)
 	char:update(map, dt)
 
+	camera:follow(char.x, char.y)
+
 	update_decorations(map.decorations_back, dt)
 	update_decorations(map.decorations_front, dt)
 

@@ -11,11 +11,13 @@ function love.load()
 	KeyConfig.cast_spell = 'c'
 
 	screen = love.filesystem.load('map.lua')()
+	love.filesystem.load('camera.lua')()
 	screen.load()
 end
 function love.draw()
+	camera:set()
 	screen.draw()
-
+	camera:unset()
 	love.graphics.print(tostring(last_fps))
 end
 function love.update(dt)
