@@ -6,6 +6,7 @@ Wall = require 'spring.wall'
 Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Fireball = require 'magics.fireball'
+CharHud = require 'hud.main'
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
@@ -91,6 +92,7 @@ function Test.load()
 		map.decorations_front:insert_at_end(make_decoration(270, y, 'dust'))
 	end
 
+	hud_elements = { CharHud(char, 790, 10) }
 end
 
 function make_ground(x, y, tile)
@@ -126,6 +128,10 @@ function Test.draw()
 	draw_magics(map)
 	draw_decorations(map.decorations_front)
 	camera:unset()
+
+	for key, value in pairs(hud_elements) do
+		value:draw()
+	end
 end
 
 function Test.update(dt)
@@ -137,6 +143,10 @@ function Test.update(dt)
 	update_decorations(map.decorations_front, dt)
 
 	update_magics(map, dt)
+
+	for key, value in pairs(hud_elements) do
+		value:update(dt)
+	end
 end
 
 function draw_decorations(instance_list)
