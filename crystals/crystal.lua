@@ -13,8 +13,8 @@ function Crystal:init(width, height, magnet_distance, absorption_distance, value
 	self.texture = texture
 	self.max_rotation_speed = 1
 	self.rotation_acceleration = 0.1
-	self.friction = 0.05
-	self.accel = 1500
+	self.friction = 10
+	self.accel = 2500
 end
 
 function Crystal:make_instance(x, y)
@@ -76,8 +76,8 @@ function Crystal:update(instance, map, dt)
 
 		local angle = math.atan2(diffy, diffx)
 
-		instance.vx = instance.vx*(1 - self.friction) + math.cos(angle) * self.accel * dt
-		instance.vy = instance.vy*(1 - self.friction) + math.sin(angle) * self.accel * dt
+		instance.vx = instance.vx*(1-self.friction*dt) + math.cos(angle) * self.accel * dt
+		instance.vy = instance.vy*(1-self.friction*dt) + math.sin(angle) * self.accel * dt
 
 		instance.angle = instance.angle + instance.rotation_speed
 		if instance.rotation_speed + self.rotation_acceleration > self.max_rotation_speed then
