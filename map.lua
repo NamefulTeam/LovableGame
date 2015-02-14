@@ -123,15 +123,12 @@ function make_ground(x, y, tile)
 	}
 end
 
-function make_decoration(x, y, decorator_name)
-	local decoration_data = { x = x, y = y, decorator_name = decorator_name }
-
+function make_decoration(x, y, decorator_name, ...)
 	local decorator = decorator_types[decorator_name]
-	if decorator.init ~= nil then
-		decorator.init(decoration_data)
-	end
+	local instance = decorator:make_instance(x, y, ...)
+	instance.decorator_name = decorator_name
 
-	return decoration_data
+	return instance
 end
 
 function Test.draw()
@@ -160,7 +157,7 @@ function draw_decorations(decoration_list)
 	for key, value in pairs(decoration_list) do
 		local decorator = decorator_types[value.decorator_name]
 
-		decorator.draw(value)
+		decorator:draw(value)
 	end
 end
 
@@ -183,24 +180,22 @@ function draw_sprite(sprite)
 	love.graphics.draw(sprite.textures[sprite.state], sprite.quad, sprite.x, sprite.y, 0, xscale, 1, ox, 0)
 end
 
-function update_decorations(decoration_list, dt)
-	for key, value in pairs(decoration_list) do
-		local decorator = decorator_types[value.decorator_name]
+function update_decorations(instance_list, dt)
+	for key, value in pairs(instance_list) do
+		local field_object = decorator_types[value.decorator_name]
 
-		if decorator.enable_magic_collisions then
+		if field_object.enable_magic_collisions then
 			for mkey, mvalue in pairs(map.magics) do
 				if check_collision_rect(value.x + value.sensitive_x, value.y + value.sensitive_y, value.sensitive_width, value.sensitive_height,
 					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
 
-					decorator.handle_magic(value, mvalue, map)
+					field_object:handle_magic(value, mvalue, map)
 
 				end
 			end
 		end
 
-		if decorator.update ~= nil then
-			decorator.update(value, map, dt)
-		end
+		field_object:update(value, map, dt)
 	end
 end
 
