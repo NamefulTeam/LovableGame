@@ -7,6 +7,7 @@ Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Fireball = require 'magics.fireball'
 CharHud = require 'hud.main'
+local background = love.graphics.newImage("background.png")
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
@@ -118,15 +119,16 @@ function Test.draw()
 	camera:set()
 	camera.x = camera.x*camera.parallax
 	camera.y = camera.y*camera.parallax
-	draw_decorations(map.decorations_back)
+	love.graphics.draw(background,-800,-400)
 	camera:unset()
 	
 	--front layer
 	camera:set()
-	char:draw()
+	draw_decorations(map.decorations_back)
 	draw_map(map)
 	draw_magics(map)
 	draw_decorations(map.decorations_front)
+	char:draw()
 	camera:unset()
 
 	for key, value in pairs(hud_elements) do
