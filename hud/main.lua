@@ -8,10 +8,18 @@ Hud.crystals_number_top = 4
 Hud.crystals_diff_top = 37
 Hud.number_right = 148
 
+Hud.character_offset_x = 184
+Hud.character_offset_y = 18
+
 Hud.update_freeze_time = 2
 Hud.update_crystal_count_speed = 20
 
-function Hud:init(char, x, y)
+Hud.equipped_skill_quad = love.graphics.newQuad(0, 0, 24, 24, 24, 24)
+Hud.spell_offset_x = 122
+Hud.spell_offset_y = 77
+
+function Hud:init(magics, char, x, y)
+	self.magics = magics
 	self.char = char
 	self.current_crystals = char.crystals
 	self.target_crystals = char.crystals
@@ -46,6 +54,14 @@ function Hud:draw()
 	love.graphics.print(crystals_diff_text,
 		self.x + self.number_right - crystals_diff_width - 2, self.y + self.crystals_diff_top - 2)
 	love.graphics.setColor(255, 255, 255)
+
+	love.graphics.draw(self.char.textures.normal, self.char.quad,
+		self.x + self.character_offset_x + self.char.width * 2, self.y + self.character_offset_y,
+		0, -2, 2)
+
+	local active_magic = self.magics[self.char.active_magic]
+	love.graphics.draw(active_magic.hud_texture, self.equipped_skill_quad,
+		self.x + self.spell_offset_x, self.y + self.spell_offset_y)
 end
 
 function Hud:update(dt)

@@ -93,7 +93,7 @@ function Test.load()
 		map.decorations_front:insert_at_end(make_decoration(270, y, 'dust'))
 	end
 
-	hud_elements = { CharHud(char, 790, 10) }
+	hud_elements = { CharHud(magics, char, 790, 10) }
 end
 
 function make_ground(x, y, tile)
