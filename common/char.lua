@@ -14,6 +14,7 @@ Character.jump_speed = 330
 Character.wall_jump_xspeed = 800
 Character.wall_jump_yspeed = 400
 Character.g = 1100
+Character.default_invulnerability_time = 3
 
 -- Graphics setup
 Character.quad = love.graphics.newQuad(3, 2, 26, 42, 32, 48)
@@ -25,7 +26,7 @@ function Character:init()
 	self.magics = { 'fireball' }
 	self.crystals = 0
 	self.maximum_lives = 3
-	self.current_lives = 2
+	self.current_lives = 3
 	self.is_vulnerable = true
 
 	self.x = 32*4
@@ -56,10 +57,27 @@ function Character:draw()
 	local xscale = self.flipped and -1 or 1
 	local ox = self.flipped and self.width or 0
 
+	if not self.is_vulnerable then
+		love.graphics.setColor(255, 255, 255, 128)
+	end
+
 	love.graphics.draw(self.textures[self.state], Character.quad, self.x, self.y, 0, xscale, 1, ox, 0)
+
+	love.graphics.setColor(255, 255, 255)
 end
 
 function Character:update(map, dt)
+	if not self.is_vulnerable then
+		if self.invulnerability_time == nil then
+			self.invulnerability_time = self.default_invulnerability_time
+		elseif self.invulnerability_time < dt then
+			self.invulnerability_time = nil
+			self.is_vulnerable = true
+		else
+			self.invulnerability_time = self.invulnerability_time - dt
+		end
+	end
+
 	self.px = self.x
 	self.py = self.y
 
