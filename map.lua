@@ -8,6 +8,7 @@ Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Needle = require 'crystals.needle'
 Fireball = require 'magics.fireball'
+Spikes = require 'traps.spikes'
 background = love.graphics.newImage("background.png")
 mainmap = love.filesystem.read("main.map")
 CharHud = require 'hud.main'
@@ -37,7 +38,7 @@ function make_ground(x, y, tile)
 end
 
 function make_decoration(x, y, decorator_name, ...)
-	local decorator = map.decorator_types[decorator_name]
+	local decorator = map.field_object_types[decorator_name]
 
 	assert(decorator ~= nil)
 
@@ -89,7 +90,7 @@ end
 function draw_decorations(instance_list)
 	local instance = instance_list.first
 	while instance ~= nil do
-		local decorator = map.decorator_types[instance.decorator_name]
+		local decorator = map.field_object_types[instance.decorator_name]
 
 		decorator:draw(instance)
 
@@ -112,14 +113,31 @@ end
 function update_decorations(instance_list, dt)
 	local instance = instance_list.first
 	while instance ~= nil do
-		local field_object = map.decorator_types[instance.decorator_name]
+		local field_object = map.field_object_types[instance.decorator_name]
 
 		if field_object.enable_magic_collisions then
+			local collision_x = instance.x + instance.sensitive_x
+			local collision_y = instance.y + instance.sensitive_y
+
 			for mkey, mvalue in pairs(map.magics) do
-				if Physics.check_collision_rect(instance.x + instance.sensitive_x, instance.y + instance.sensitive_y, instance.sensitive_width, instance.sensitive_height,
+				if Physics.check_collision_rect(collision_x, collision_y, instance.sensitive_width, instance.sensitive_height,
 					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
 
 					field_object:handle_magic(instance, mvalue, map)
+
+				end
+			end
+		end
+
+		if field_object.enable_char_collisions then
+			local collision_x = instance.x + instance.sensitive_x
+			local collision_y = instance.y + instance.sensitive_y
+			
+			for mkey, mvalue in pairs(map.chars) do
+				if Physics.check_collision_rect(collision_x, collision_y, instance.sensitive_width, instance.sensitive_height,
+					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
+
+					field_object:handle_hero_collision(instance, mvalue, map)
 
 				end
 			end
@@ -167,17 +185,18 @@ function parse_mapfile(mapfile)
 	ground.textures.spring_deep = love.graphics.newImage('spring/ground-deep.png')
 	ground.yoffsets.spring_deep = 0
 
-	local decorator_types = {}
-	decorator_types.wall = Wall()
-	decorator_types.lamp = Lamp()
-	decorator_types.flower1 = Flower1()
-	decorator_types.dust = Dust()
-	decorator_types.needle = Needle()
+	local field_object_types = {}
+	field_object_types.wall = Wall()
+	field_object_types.lamp = Lamp()
+	field_object_types.flower1 = Flower1()
+	field_object_types.dust = Dust()
+	field_object_types.needle = Needle()
+	field_object_types.spikes = Spikes()
 
 	map = {}
 	map.chars = { char }
 	map.ground_info = ground
-	map.decorator_types = decorator_types
+	map.field_object_types = field_object_types
 	map.magics = {}
 	map.ground = {}
 	map.decorations_back = LinkedList()
