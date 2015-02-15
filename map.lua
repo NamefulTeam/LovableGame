@@ -5,6 +5,7 @@ Physics = require 'physics'
 Wall = require 'spring.wall'
 Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
+Needle = require 'crystals.needle'
 Fireball = require 'magics.fireball'
 background = love.graphics.newImage("background.png")
 mainmap = love.filesystem.read("main.map")
@@ -25,6 +26,8 @@ function Test.load()
 end
 
 function make_ground(x, y, tile)
+	assert(tile ~= nil)
+
 	return {
 		x = x,
 		y = y,
@@ -34,6 +37,9 @@ end
 
 function make_decoration(x, y, decorator_name, ...)
 	local decorator = map.decorator_types[decorator_name]
+
+	assert(decorator ~= nil)
+
 	local instance = decorator:make_instance(x, y, ...)
 	instance.decorator_name = decorator_name
 
@@ -164,6 +170,7 @@ function parse_mapfile(mapfile)
 	decorator_types.wall = Wall()
 	decorator_types.lamp = Lamp()
 	decorator_types.dust = Dust()
+	decorator_types.needle = Needle()
 
 	map = {}
 	map.chars = { char }
@@ -178,8 +185,34 @@ function parse_mapfile(mapfile)
 	while maplist[index] do
 		elementlist = string.explode(maplist[index], ",")
 
-		if elementlist[1] == "tile" then
-			table.insert(map.ground, make_ground(tonumber(elementlist[2]) * 32, tonumber(elementlist[3]) * 32, elementlist[4]))
+		if elementlist[1] == "--" then
+			-- Ignore
+		elseif elementlist[1] == "tile" then
+			local tile_type = elementlist[2]
+			local x = tonumber(elementlist[3]) * 32
+			local y = tonumber(elementlist[4]) * 32
+
+			table.insert(map.ground, make_ground(x, y, tile_type))
+		elseif elementlist[1] == "tile-range-x" then
+			local tile_type = elementlist[2]
+			local start_x = tonumber(elementlist[3]) * 32
+			local end_x = tonumber(elementlist[4]) * 32
+			local interval_x = tonumber(elementlist[5]) * 32
+			local y = tonumber(elementlist[6]) * 32
+
+			for x = start_x, end_x, interval_x do
+				table.insert(map.ground, make_ground(x, y, tile_type))
+			end
+		elseif elementlist[1] == "tile-range-y" then
+			local tile_type = elementlist[2]
+			local x = tonumber(elementlist[3]) * 32
+			local start_y = tonumber(elementlist[4]) * 32
+			local end_y = tonumber(elementlist[5]) * 32
+			local interval_y = tonumber(elementlist[6]) * 32
+
+			for y = start_y, end_y, interval_y do
+				table.insert(map.ground, make_ground(x, y, tile_type))
+			end
 		elseif elementlist[1] == "field" then
 			local pos = elementlist[2]
 			local x = tonumber(elementlist[3]) * 32
@@ -208,6 +241,25 @@ function parse_mapfile(mapfile)
 			local interval_y = tonumber(elementlist[7]) * 32
 			
 			for y = start_y, end_y, interval_y do
+				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+			end
+		elseif elementlist[1] == "field-range-arc" then
+			local pos = elementlist[2]
+			local obj_type = elementlist[3]
+
+			local center_x = tonumber(elementlist[4]) * 32
+			local center_y = tonumber(elementlist[5]) * 32
+			local radius = tonumber(elementlist[6]) * 32
+			local count = tonumber(elementlist[7])
+			
+			for i = 1, count do
+				local angle = math.pi * 2 * i / count
+				local relative_x = math.cos(angle) * radius
+				local relative_y = math.sin(angle) * radius
+
+				local x = center_x + relative_x
+				local y = center_y + relative_y
+
 				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
 			end
 		end

@@ -1,35 +1,14 @@
-tile,4,8,spring_grass,
-tile,5,8,spring_grass,
-tile,6,8,spring_grass,
-tile,7,8,spring_grass,
-tile,8,8,spring_grass,
-tile,9,8,spring_grass,
-tile,10,8,spring_grass,
+tile-range-x,spring_grass,4,10,1,8,
+tile-range-y,spring_deep,9,3,5,1,
+tile,spring_grass,9,2
+tile-range-y,spring_deep,6,3,5,1,
+tile,spring_grass,6,2
 
-tile,9,5,spring_deep,
-tile,6,5,spring_deep,
-tile,9,4,spring_deep,
-tile,6,4,spring_deep,
-tile,9,3,spring_deep,
-tile,6,3,spring_deep,
-tile,9,2,spring_grass,
-tile,6,2,spring_grass,
-
-tile,6,13,spring_grass,
-tile,7,13,spring_grass,
-tile,8,13,spring_grass,
-tile,9,13,spring_grass,
-tile,10,13,spring_grass,
-tile,11,13,spring_grass,
-tile,12,13,spring_grass,
-
-tile,13,6,spring_grass,
-tile,13,7,spring_deep,
-tile,13,8,spring_deep,
-tile,13,9,spring_deep,
-tile,13,10,spring_deep,
-
-tile,10,9,spring_deep,
+tile-range-x,spring_grass,2,20,1,13,
+tile-range-x,spring_grass,13,17,1,6,
+tile-range-y,spring_deep,13,7,10,1,
+tile-range-y,spring_deep,17,7,10,1,
+tile,spring_deep,10,9,
 
 field,back,0,0,wall,
 field,back,1,1,lamp,
@@ -41,4 +20,6 @@ field,back,4,5,wall,
 field-range-x,back,dust,5,9.5,0.3,7.5,
 field-range-x,back,dust,6.5,12.5,0.3,12.5,
 
-field-range-y,back,dust,8.5,2,6,0.3
+field-range-y,back,dust,8.5,2,6,0.3,
+field-range-arc,back,dust,15.5,9,1,15,
+field-range-arc,back,needle,15.5,9,0.5,3,
