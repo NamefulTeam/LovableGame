@@ -19,6 +19,10 @@ function love.draw()
 	love.graphics.print(tostring(last_fps))
 end
 function love.update(dt)
+	if love.keyboard.isDown('escape') then
+		love.event.push('quit')
+	end
+
 	screen.update(dt)
 
 	total_time = total_time + dt
