@@ -2,7 +2,7 @@ class = require 'class'
 FieldObject = require 'field_object'
 
 BaseTrap = class(FieldObject)
-BaseTrap.expulsion_speed = 1000
+BaseTrap.expulsion_speed = 400
 
 BaseTrap.init = FieldObject.init
 BaseTrap.enable_char_collisions = true
