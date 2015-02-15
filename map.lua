@@ -8,6 +8,8 @@ Dust = require 'crystals.dust'
 Fireball = require 'magics.fireball'
 background = love.graphics.newImage("background.png")
 mainmap = love.filesystem.read("main.map")
+CharHud = require 'hud.main'
+local background = love.graphics.newImage("background.png")
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
@@ -18,48 +20,6 @@ function Test.load()
 	magics.fireball = Fireball()
 
 	parse_mapfile(mainmap)
-	--[[map.chars = { char }
-	map.ground_info = ground
-	map.decorator_types = decorator_types
-	map.magics = {}
-	map.ground = {}
-	map.decorations_back = LinkedList()
-	map.decorations_front = LinkedList()
-	table.insert(map.ground, make_ground(32 * 0, 110, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 0, 110 + 32, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 0, 110 + 32 * 2, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 0, 110 + 32 * 3, 'spring_deep'))
-
-	table.insert(map.ground, make_ground(32 * 1, 200, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 2, 200, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 3, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 4, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 5, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 6, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 7, 250, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 8, 250, 'spring_deep'))
-
-	table.insert(map.ground, make_ground(32 * 4, 100, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 5, 100, 'spring_grass'))
-
-	table.insert(map.ground, make_ground(32 * 8, 218, 'spring_grass'))
-
-	table.insert(map.ground, make_ground(32 * 6, 60, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 6, 60 + 32, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 6, 60 + 32 * 2, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 6, 60 + 32 * 3, 'spring_deep'))
-
-	table.insert(map.ground, make_ground(32 * 9, 32 * 1, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 2, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 3, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 4, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 5, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 6, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 7, 'spring_deep'))
-	table.insert(map.ground, make_ground(32 * 9, 32 * 8, 'spring_deep'))
-
-	table.insert(map.ground, make_ground(32 * 10, 32 * 8, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))]]--
 
 	map.decorations_back:insert_at_end(make_decoration(0, 0, 'wall'))
 	map.decorations_front:insert_at_end(make_decoration(20, 20, 'lamp'))
@@ -76,6 +36,7 @@ function Test.load()
 		map.decorations_front:insert_at_end(make_decoration(270, y, 'dust'))
 	end
 
+	hud_elements = { CharHud(magics, char, 790, 10) }
 end
 
 function make_ground(x, y, tile)
@@ -112,6 +73,10 @@ function Test.draw()
 	draw_decorations(map.decorations_front)
 	char:draw()
 	camera:unset()
+
+	for key, value in pairs(hud_elements) do
+		value:draw()
+	end
 end
 
 function Test.update(dt)
@@ -123,6 +88,10 @@ function Test.update(dt)
 	update_decorations(map.decorations_front, dt)
 
 	update_magics(map, dt)
+
+	for key, value in pairs(hud_elements) do
+		value:update(dt)
+	end
 end
 
 function draw_decorations(instance_list)
