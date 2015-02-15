@@ -6,35 +6,19 @@ Wall = require 'spring.wall'
 Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Fireball = require 'magics.fireball'
-local background = love.graphics.newImage("background.png")
+background = love.graphics.newImage("background.png")
+mainmap = love.filesystem.read("main.map")
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
 
 	char = Character()
 
-	local ground = {}
-	ground.width = 32
-	ground.height = 32
-	ground.quad = love.graphics.newQuad(0, 0, 32, 32, 32, 32)
-	ground.textures = {}
-	ground.yoffsets = {}
-
-	ground.textures.spring_grass = love.graphics.newImage('spring/ground-grass.png')
-	ground.yoffsets.spring_grass = 3
-	ground.textures.spring_deep = love.graphics.newImage('spring/ground-deep.png')
-	ground.yoffsets.spring_deep = 0
-
-	local decorator_types = {}
-	decorator_types.wall = Wall()
-	decorator_types.lamp = Lamp()
-	decorator_types.dust = Dust()
-
 	magics = {}
 	magics.fireball = Fireball()
 
-	map = {}
-	map.chars = { char }
+	parse_mapfile(mainmap)
+	--[[map.chars = { char }
 	map.ground_info = ground
 	map.decorator_types = decorator_types
 	map.magics = {}
@@ -75,7 +59,7 @@ function Test.load()
 	table.insert(map.ground, make_ground(32 * 9, 32 * 8, 'spring_deep'))
 
 	table.insert(map.ground, make_ground(32 * 10, 32 * 8, 'spring_grass'))
-	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))
+	table.insert(map.ground, make_ground(32 * 11, 32 * 8, 'spring_grass'))]]--
 
 	map.decorations_back:insert_at_end(make_decoration(0, 0, 'wall'))
 	map.decorations_front:insert_at_end(make_decoration(20, 20, 'lamp'))
@@ -190,6 +174,67 @@ function update_magics(map, dt)
 	for key, value in pairs(map.magics) do
 		value.magic:update(map, value, dt)
 	end
+end
+
+--https://love2d.org/wiki/String_exploding
+function string.explode(str, div)
+    assert(type(str) == "string" and type(div) == "string", "invalid arguments")
+    local o = {}
+    while true do
+        local pos1,pos2 = str:find(div)
+        if not pos1 then
+            o[#o+1] = str
+            break
+        end
+        o[#o+1],str = str:sub(1,pos1-1),str:sub(pos2+1)
+    end
+    return o
+end
+
+function parse_mapfile(mapfile)
+	local maplist = string.explode(mapfile, "\n")
+
+	local ground = {}
+	ground.width = 32
+	ground.height = 32
+	ground.quad = love.graphics.newQuad(0, 0, 32, 32, 32, 32)
+	ground.textures = {}
+	ground.yoffsets = {}
+
+	ground.textures.spring_grass = love.graphics.newImage('spring/ground-grass.png')
+	ground.yoffsets.spring_grass = 3
+	ground.textures.spring_deep = love.graphics.newImage('spring/ground-deep.png')
+	ground.yoffsets.spring_deep = 0
+
+	local decorator_types = {}
+	decorator_types.wall = Wall()
+	decorator_types.lamp = Lamp()
+	decorator_types.dust = Dust()
+
+	map = {}
+	map.chars = { char }
+	map.ground_info = ground
+	map.decorator_types = decorator_types
+	map.magics = {}
+	map.ground = {}
+	map.decorations_back = LinkedList()
+	map.decorations_front = LinkedList()
+	
+	local index = 1
+	while maplist[index] do
+
+		elementlist = string.explode(maplist[index], ",")
+
+		if elementlist[1] == "tile" then
+			table.insert(map.ground, make_ground(tonumber(elementlist[2]), tonumber(elementlist[3]), elementlist[4]))
+		elseif elementlist[1] == "decoration" then
+		elseif elementlist[1] == "dust" then
+		end
+
+		print(maplist[index])
+		index = index + 1
+	end
+
 end
 
 return Test

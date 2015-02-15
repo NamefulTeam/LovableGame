@@ -15,9 +15,7 @@ function love.load()
 	screen.load()
 end
 function love.draw()
-	--camera:set()
 	screen.draw()
-	--camera:unset()
 	love.graphics.print(tostring(last_fps))
 end
 function love.update(dt)
