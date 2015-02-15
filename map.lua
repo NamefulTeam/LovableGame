@@ -21,21 +21,6 @@ function Test.load()
 
 	parse_mapfile(mainmap)
 
-	map.decorations_back:insert_at_end(make_decoration(0, 0, 'wall'))
-	map.decorations_front:insert_at_end(make_decoration(20, 20, 'lamp'))
-	map.decorations_back:insert_at_end(make_decoration(64, 0, 'wall'))
-	map.decorations_front:insert_at_end(make_decoration(94, 20, 'lamp'))
-	map.decorations_back:insert_at_end(make_decoration(128, 128, 'wall'))
-	map.decorations_back:insert_at_end(make_decoration(128, 192, 'wall'))
-
-	for x = 140, 250, 10 do
-		map.decorations_front:insert_at_end(make_decoration(x, 230, 'dust'))
-	end
-
-	for y = 40, 190, 10 do
-		map.decorations_front:insert_at_end(make_decoration(270, y, 'dust'))
-	end
-
 	hud_elements = { CharHud(magics, char, 790, 10) }
 end
 
@@ -70,8 +55,8 @@ function Test.draw()
 	draw_decorations(map.decorations_back)
 	draw_map(map)
 	draw_magics(map)
-	draw_decorations(map.decorations_front)
 	char:draw()
+	draw_decorations(map.decorations_front)
 	camera:unset()
 
 	for key, value in pairs(hud_elements) do
@@ -188,22 +173,47 @@ function parse_mapfile(mapfile)
 	map.ground = {}
 	map.decorations_back = LinkedList()
 	map.decorations_front = LinkedList()
-	
+
 	local index = 1
 	while maplist[index] do
-
 		elementlist = string.explode(maplist[index], ",")
 
 		if elementlist[1] == "tile" then
-			table.insert(map.ground, make_ground(tonumber(elementlist[2]), tonumber(elementlist[3]), elementlist[4]))
-		elseif elementlist[1] == "decoration" then
-		elseif elementlist[1] == "dust" then
+			table.insert(map.ground, make_ground(tonumber(elementlist[2]) * 32, tonumber(elementlist[3]) * 32, elementlist[4]))
+		elseif elementlist[1] == "field" then
+			local pos = elementlist[2]
+			local x = tonumber(elementlist[3]) * 32
+			local y = tonumber(elementlist[4]) * 32
+			local obj_type = elementlist[5]
+			map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+		elseif elementlist[1] == "field-range-x" then
+			local pos = elementlist[2]
+			local obj_type = elementlist[3]
+
+			local start_x = tonumber(elementlist[4]) * 32
+			local end_x = tonumber(elementlist[5]) * 32
+			local interval_x = tonumber(elementlist[6]) * 32
+			local y = tonumber(elementlist[7]) * 32
+			
+			for x = start_x, end_x, interval_x do
+				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+			end
+		elseif elementlist[1] == "field-range-y" then
+			local pos = elementlist[2]
+			local obj_type = elementlist[3]
+
+			local x = tonumber(elementlist[4]) * 32
+			local start_y = tonumber(elementlist[5]) * 32
+			local end_y = tonumber(elementlist[6]) * 32
+			local interval_y = tonumber(elementlist[7]) * 32
+			
+			for y = start_y, end_y, interval_y do
+				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+			end
 		end
 
-		print(maplist[index])
 		index = index + 1
 	end
-
 end
 
 return Test
