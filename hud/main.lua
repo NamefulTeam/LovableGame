@@ -18,6 +18,14 @@ Hud.equipped_skill_quad = love.graphics.newQuad(0, 0, 24, 24, 24, 24)
 Hud.spell_offset_x = 122
 Hud.spell_offset_y = 77
 
+Hud.life_texture = love.graphics.newImage('hud/life.png')
+Hud.death_texture = love.graphics.newImage('hud/death.png')
+Hud.life_quad = love.graphics.newQuad(0, 0, 21, 21, 21, 21)
+
+Hud.offset_x = 152
+Hud.offset_y = 14
+Hud.life_y_diff = 20 -- We'll have the borders of the life quads overlap a bit
+
 function Hud:init(magics, char, x, y)
 	self.magics = magics
 	self.char = char
@@ -62,6 +70,14 @@ function Hud:draw()
 	local active_magic = self.magics[self.char.active_magic]
 	love.graphics.draw(active_magic.hud_texture, self.equipped_skill_quad,
 		self.x + self.spell_offset_x, self.y + self.spell_offset_y)
+
+	for current_life = 1, self.char.maximum_lives do
+		local life_x = self.x + self.offset_x
+		local life_y = self.y + self.offset_y + (current_life - 1) * self.life_y_diff
+		local life_texture = self.char.current_lives >= current_life and self.life_texture or self.death_texture
+
+		love.graphics.draw(life_texture, self.life_quad, life_x, life_y)
+	end
 end
 
 function Hud:update(dt)

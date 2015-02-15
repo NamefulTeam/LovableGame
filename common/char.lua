@@ -24,6 +24,8 @@ function Character:init()
 	-- Variables
 	self.magics = { 'fireball' }
 	self.crystals = 0
+	self.maximum_lives = 3
+	self.current_lives = 2
 
 	self.x = 32*4
 	self.y = 170
