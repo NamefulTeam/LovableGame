@@ -23,6 +23,10 @@ function love.update(dt)
 		love.event.push('quit')
 	end
 
+	if dt > 1/30 then
+		print('Slow frame: ' .. dt)
+	end
+
 	screen.update(dt)
 
 	total_time = total_time + dt

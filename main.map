@@ -5,21 +5,24 @@ tile-range-y,spring_deep,6,3,5,1,
 tile,spring_grass,6,2
 
 tile-range-x,spring_grass,2,20,1,13,
-tile-range-x,spring_grass,13,17,1,6,
+tile-range-x,spring_grass,13,21,1,6,
 tile-range-y,spring_deep,13,7,10,1,
 tile-range-y,spring_deep,17,7,10,1,
+tile-range-y,spring_deep,21,7,10,1,
 tile,spring_deep,10,9,
 
-field,back,0,0,wall,
-field,back,1,1,lamp,
-field,back,2,0,wall,
-field,back,3,1,lamp,
-field,back,4,4,wall,
-field,back,4,5,wall,
+field,back,wall,0,0,
+field,back,lamp,1,1,
+field,back,wall,2,0,
+field,back,lamp,3,1,
+field,back,wall,4,4,
+field,back,wall,4,5,
 
 field-range-x,back,dust,5,9.5,0.3,7.5,
 field-range-x,back,dust,6.5,12.5,0.3,12.5,
 
 field-range-y,back,dust,8.5,2,6,0.3,
-field-range-arc,back,dust,15.5,9,1,15,
-field-range-arc,back,needle,15.5,9,0.5,3,
+field-range-arc,back,dust,15.5,8.8,1,15,
+field-range-arc,back,needle,15.5,8.8,0.5,3,
+
+field,front,flower1,4.2,7.8

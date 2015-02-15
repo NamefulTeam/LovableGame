@@ -3,6 +3,7 @@ LinkedList = require 'linked_list'
 Character = require 'common.char'
 Physics = require 'physics'
 Wall = require 'spring.wall'
+Flower1 = require 'spring.flower1'
 Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Needle = require 'crystals.needle'
@@ -59,9 +60,9 @@ function Test.draw()
 	--front layer
 	camera:set()
 	draw_decorations(map.decorations_back)
-	draw_map(map)
 	draw_magics(map)
 	char:draw()
+	draw_map(map)
 	draw_decorations(map.decorations_front)
 	camera:unset()
 
@@ -169,6 +170,7 @@ function parse_mapfile(mapfile)
 	local decorator_types = {}
 	decorator_types.wall = Wall()
 	decorator_types.lamp = Lamp()
+	decorator_types.flower1 = Flower1()
 	decorator_types.dust = Dust()
 	decorator_types.needle = Needle()
 
@@ -215,9 +217,10 @@ function parse_mapfile(mapfile)
 			end
 		elseif elementlist[1] == "field" then
 			local pos = elementlist[2]
-			local x = tonumber(elementlist[3]) * 32
-			local y = tonumber(elementlist[4]) * 32
-			local obj_type = elementlist[5]
+			local obj_type = elementlist[3]
+
+			local x = tonumber(elementlist[4]) * 32
+			local y = tonumber(elementlist[5]) * 32
 			map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
 		elseif elementlist[1] == "field-range-x" then
 			local pos = elementlist[2]
