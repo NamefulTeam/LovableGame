@@ -24,6 +24,10 @@ function Test.load()
 
 	parse_mapfile(mainmap)
 
+	local music = love.audio.newSource(map.musics[1])
+	music:setLooping(true)
+	love.audio.play(music)
+
 	hud_elements = { CharHud(magics, char, 790, 10) }
 end
 
@@ -201,6 +205,7 @@ function parse_mapfile(mapfile)
 	map.ground = {}
 	map.decorations_back = LinkedList()
 	map.decorations_front = LinkedList()
+	map.musics = {}
 
 	local index = 1
 	while maplist[index] do
@@ -208,6 +213,10 @@ function parse_mapfile(mapfile)
 
 		if elementlist[1] == "--" then
 			-- Ignore
+		elseif elementlist[1] == "music" then
+			local music_path = elementlist[2]
+
+			table.insert(map.musics, music_path)
 		elseif elementlist[1] == "tile" then
 			local tile_type = elementlist[2]
 			local x = tonumber(elementlist[3]) * 32
