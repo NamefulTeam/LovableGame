@@ -12,7 +12,6 @@ Spikes = require 'traps.spikes'
 background = love.graphics.newImage("background.png")
 mainmap = love.filesystem.read("main.map")
 CharHud = require 'hud.main'
-local background = love.graphics.newImage("background.png")
 
 function Test.load()
 	love.graphics.setBackgroundColor(255, 255, 255)
@@ -59,7 +58,8 @@ function Test.draw()
 	camera:set()
 	camera.x = camera.x*camera.parallax
 	camera.y = camera.y*camera.parallax
-	love.graphics.draw(background,-800,-400)
+	love.graphics.draw(background,math.floor(camera.x/1600)*1600,-400)
+	love.graphics.draw(background,(math.floor(camera.x/1600)+1)*1600,-400)
 	camera:unset()
 	
 	--front layer
