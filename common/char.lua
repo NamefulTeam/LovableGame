@@ -1,11 +1,12 @@
 class = require 'class'
+Fireball = require 'magics.fireball'
 
 Character = class()
 
 -- Constants
 Character.max_vy = 3000
 Character.max_vx = 1000
-Character.wall_fall_g_friction = 0.95 -- Relative to char.g
+Character.wall_fall_g_friction = 0.95 -- Relative to g
 Character.max_grab_fall_speed = 1000
 Character.x_friction_threshold = 10
 Character.x_friction = 0.99
@@ -19,11 +20,17 @@ Character.default_invulnerability_time = 3
 -- Graphics setup
 Character.quad = love.graphics.newQuad(3, 2, 26, 42, 32, 48)
 
-function Character:init()
+function Character:init(key_config)
+	self.key_config = key_config
+
 	self.textures = {}
 
+	self.available_magics = {}
+	self.available_magics.fireball = Fireball()
+
+	self.magics = { 'fireball'}
+
 	-- Variables
-	self.magics = { 'fireball' }
 	self.crystals = 0
 	self.maximum_lives = 3
 	self.current_lives = 3
@@ -67,6 +74,8 @@ function Character:draw()
 end
 
 function Character:update(map, dt)
+	assert(map ~= nil)
+
 	if not self.is_vulnerable then
 		if self.invulnerability_time == nil then
 			self.invulnerability_time = self.default_invulnerability_time
@@ -103,10 +112,10 @@ function Character:update(map, dt)
 	end
 
 	local direction = 0
-	if love.keyboard.isDown(KeyConfig.left) and self.can_move then
+	if love.keyboard.isDown(self.key_config.left) and self.can_move then
 		direction = direction - 1
 	end
-	if love.keyboard.isDown(KeyConfig.right) and self.can_move then
+	if love.keyboard.isDown(self.key_config.right) and self.can_move then
 		direction = direction + 1
 	end
 
@@ -116,7 +125,7 @@ function Character:update(map, dt)
 	local can_wall_jump_left = not can_jump and self:can_wall_jump_left(map, self)
 	local can_wall_jump_right = not can_jump and self:can_wall_jump_right(map, self)
 
-	local jump_key_active = love.keyboard.isDown(KeyConfig.jump)
+	local jump_key_active = love.keyboard.isDown(self.key_config.jump)
 
 	if direction < 0 then
 		if not can_wall_jump_right then
@@ -130,13 +139,13 @@ function Character:update(map, dt)
 		self.vx = self.vx + self.walk_acceleration
 	end
 
-	if self.can_cast and love.keyboard.isDown(KeyConfig.cast_spell) then
-		local magic = magics[self.active_magic]
+	if self.can_cast and love.keyboard.isDown(self.key_config.cast_spell) then
+		local magic = self.available_magics[self.active_magic]
 		magic:cast(map, self)
 	end
 
 	if self.state == 'normal' then
-		if not char.jump_key_active_last_frame then
+		if not self.jump_key_active_last_frame then
 			if can_wall_jump_left then
 				self.state = 'grab_wall'
 				self.flipped = true
@@ -195,7 +204,7 @@ function Character:can_wall_jump_left(map)
 	return Physics.has_collisions_at_position(map, self.x + 1, self.y, self)
 end
 
-function Character:can_wall_jump_right()
+function Character:can_wall_jump_right(map)
 	return Physics.has_collisions_at_position(map, self.x - 1, self.y, self)
 end
 

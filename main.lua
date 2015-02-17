@@ -1,21 +1,23 @@
+Hub = require 'hub.main'
+
 frame = 0
 frame_reset_count = 10
 total_time = 0
 last_fps = 0
 
 function love.load()
-	KeyConfig = {}
+	local KeyConfig = {}
 	KeyConfig.left = 'left'
 	KeyConfig.right = 'right'
 	KeyConfig.jump = 'z'
 	KeyConfig.cast_spell = 'c'
+	KeyConfig.accept = KeyConfig.jump
 
-	screen = love.filesystem.load('map.lua')()
-	love.filesystem.load('camera.lua')()
-	screen.load()
+	screen = Hub(KeyConfig)
+	screen:load()
 end
 function love.draw()
-	screen.draw()
+	screen:draw()
 	love.graphics.print(tostring(last_fps))
 end
 function love.update(dt)
@@ -27,7 +29,7 @@ function love.update(dt)
 		print('Slow frame: ' .. dt)
 	end
 
-	screen.update(dt)
+	screen:update(dt)
 
 	total_time = total_time + dt
 

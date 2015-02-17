@@ -61,3 +61,5 @@ function camera:follow(x, y)
   self.x = self.x / camera.parallax
   self.y = self.y / camera.parallax
 end
+
+return camera

@@ -26,8 +26,7 @@ Hud.offset_x = 152
 Hud.offset_y = 14
 Hud.life_y_diff = 20 -- We'll have the borders of the life quads overlap a bit
 
-function Hud:init(magics, char, x, y)
-	self.magics = magics
+function Hud:init(char, x, y)
 	self.char = char
 	self.current_crystals = char.crystals
 	self.target_crystals = char.crystals
@@ -67,7 +66,7 @@ function Hud:draw()
 		self.x + self.character_offset_x + self.char.width * 2, self.y + self.character_offset_y,
 		0, -2, 2)
 
-	local active_magic = self.magics[self.char.active_magic]
+	local active_magic = self.char.available_magics[self.char.active_magic]
 	love.graphics.draw(active_magic.hud_texture, self.equipped_skill_quad,
 		self.x + self.spell_offset_x, self.y + self.spell_offset_y)
 

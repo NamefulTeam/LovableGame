@@ -1,4 +1,5 @@
-Test = {}
+MapScreen = class()
+
 LinkedList = require 'linked_list'
 Character = require 'common.char'
 Physics = require 'physics'
@@ -7,27 +8,29 @@ Flower1 = require 'spring.flower1'
 Lamp = require 'spring.lamp'
 Dust = require 'crystals.dust'
 Needle = require 'crystals.needle'
-Fireball = require 'magics.fireball'
 Spikes = require 'traps.spikes'
 background = love.graphics.newImage("background.png")
-mainmap = love.filesystem.read("main.map")
 CharHud = require 'hud.main'
+camera = require 'camera'
 
-function Test.load()
+function MapScreen:init(key_config, map_name)
+	self.key_config = key_config
+	self.map_name = map_name
+end
+
+function MapScreen:load()
 	love.graphics.setBackgroundColor(255, 255, 255)
 
-	char = Character()
+	self.char = Character(self.key_config)
 
-	magics = {}
-	magics.fireball = Fireball()
+	local mainmap = love.filesystem.read(self.map_name)
+	self:parse_mapfile(mainmap)
 
-	parse_mapfile(mainmap)
-
-	local music = love.audio.newSource(map.musics[1])
+	local music = love.audio.newSource(self.map.musics[1])
 	music:setLooping(true)
 	love.audio.play(music)
 
-	hud_elements = { CharHud(magics, char, 790, 10) }
+	self.hud_elements = { CharHud(self.char, 790, 10) }
 end
 
 function make_ground(x, y, tile)
@@ -40,8 +43,8 @@ function make_ground(x, y, tile)
 	}
 end
 
-function make_decoration(x, y, decorator_name, ...)
-	local decorator = map.field_object_types[decorator_name]
+function MapScreen:make_decoration(x, y, decorator_name, ...)
+	local decorator = self.map.field_object_types[decorator_name]
 
 	assert(decorator ~= nil)
 
@@ -51,7 +54,7 @@ function make_decoration(x, y, decorator_name, ...)
 	return instance
 end
 
-function Test.draw()
+function MapScreen:draw()
 	love.graphics.clear()
 
 	--back layer
@@ -64,37 +67,37 @@ function Test.draw()
 	
 	--front layer
 	camera:set()
-	draw_decorations(map.decorations_back)
-	draw_magics(map)
-	char:draw()
-	draw_map(map)
-	draw_decorations(map.decorations_front)
+	self:draw_decorations(self.map.decorations_back)
+	draw_magics(self.map)
+	self.char:draw()
+	draw_map(self.map)
+	self:draw_decorations(self.map.decorations_front)
 	camera:unset()
 
-	for key, value in pairs(hud_elements) do
+	for key, value in pairs(self.hud_elements) do
 		value:draw()
 	end
 end
 
-function Test.update(dt)
-	char:update(map, dt)
+function MapScreen:update(dt)
+	self.char:update(self.map, dt)
 
-	camera:follow(char.x, char.y)
+	camera:follow(self.char.x, self.char.y)
 
-	update_decorations(map.decorations_back, dt)
-	update_decorations(map.decorations_front, dt)
+	self:update_decorations(self.map.decorations_back, dt)
+	self:update_decorations(self.map.decorations_front, dt)
 
-	update_magics(map, dt)
+	update_magics(self.map, dt)
 
-	for key, value in pairs(hud_elements) do
+	for key, value in pairs(self.hud_elements) do
 		value:update(dt)
 	end
 end
 
-function draw_decorations(instance_list)
+function MapScreen:draw_decorations(instance_list)
 	local instance = instance_list.first
 	while instance ~= nil do
-		local decorator = map.field_object_types[instance.decorator_name]
+		local decorator = self.map.field_object_types[instance.decorator_name]
 
 		decorator:draw(instance)
 
@@ -114,20 +117,20 @@ function draw_magics(map)
 	end
 end
 
-function update_decorations(instance_list, dt)
+function MapScreen:update_decorations(instance_list, dt)
 	local instance = instance_list.first
 	while instance ~= nil do
-		local field_object = map.field_object_types[instance.decorator_name]
+		local field_object = self.map.field_object_types[instance.decorator_name]
 
 		if field_object.enable_magic_collisions then
 			local collision_x = instance.x + instance.sensitive_x
 			local collision_y = instance.y + instance.sensitive_y
 
-			for mkey, mvalue in pairs(map.magics) do
+			for mkey, mvalue in pairs(self.map.magics) do
 				if Physics.check_collision_rect(collision_x, collision_y, instance.sensitive_width, instance.sensitive_height,
 					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
 
-					field_object:handle_magic(instance, mvalue, map)
+					field_object:handle_magic(instance, mvalue, self.map)
 
 				end
 			end
@@ -137,7 +140,7 @@ function update_decorations(instance_list, dt)
 			local collision_x = instance.x + instance.sensitive_x
 			local collision_y = instance.y + instance.sensitive_y
 			
-			for mkey, mvalue in pairs(map.chars) do
+			for mkey, mvalue in pairs(self.map.chars) do
 				if Physics.check_collision_rect(collision_x, collision_y, instance.sensitive_width, instance.sensitive_height,
 					mvalue.x, mvalue.y, mvalue.width, mvalue.height) then
 
@@ -147,7 +150,7 @@ function update_decorations(instance_list, dt)
 			end
 		end
 
-		field_object:update(instance, map, dt)
+		field_object:update(instance, self.map, dt)
 
 		instance = instance.next
 	end
@@ -174,7 +177,7 @@ function string.explode(str, div)
     return o
 end
 
-function parse_mapfile(mapfile)
+function MapScreen:parse_mapfile(mapfile)
 	local maplist = string.explode(mapfile, "\n")
 
 	local ground = {}
@@ -197,8 +200,10 @@ function parse_mapfile(mapfile)
 	field_object_types.needle = Needle()
 	field_object_types.spikes = Spikes()
 
-	map = {}
-	map.chars = { char }
+	local map = {}
+	self.map = map
+
+	map.chars = { self.char }
 	map.ground_info = ground
 	map.field_object_types = field_object_types
 	map.magics = {}
@@ -249,7 +254,7 @@ function parse_mapfile(mapfile)
 
 			local x = tonumber(elementlist[4]) * 32
 			local y = tonumber(elementlist[5]) * 32
-			map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+			map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 		elseif elementlist[1] == "field-range-x" then
 			local pos = elementlist[2]
 			local obj_type = elementlist[3]
@@ -260,7 +265,7 @@ function parse_mapfile(mapfile)
 			local y = tonumber(elementlist[7]) * 32
 			
 			for x = start_x, end_x, interval_x do
-				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+				map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 			end
 		elseif elementlist[1] == "field-range-y" then
 			local pos = elementlist[2]
@@ -272,7 +277,7 @@ function parse_mapfile(mapfile)
 			local interval_y = tonumber(elementlist[7]) * 32
 			
 			for y = start_y, end_y, interval_y do
-				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+				map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 			end
 		elseif elementlist[1] == "field-range-arc" then
 			local pos = elementlist[2]
@@ -291,7 +296,7 @@ function parse_mapfile(mapfile)
 				local x = center_x + relative_x
 				local y = center_y + relative_y
 
-				map['decorations_' .. pos]:insert_at_end(make_decoration(x, y, obj_type))
+				map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 			end
 		end
 
@@ -299,4 +304,4 @@ function parse_mapfile(mapfile)
 	end
 end
 
-return Test
+return MapScreen

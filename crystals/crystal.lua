@@ -30,6 +30,9 @@ function Crystal:make_instance(x, y)
 end
 
 function Crystal:update(instance, map, dt)
+	assert(instance ~= nil)
+	assert(map ~= nil)
+
 	local instance_center_x = instance.x + self.width / 2
 	local instance_center_y = instance.y + self.height / 2
 
@@ -69,7 +72,7 @@ function Crystal:update(instance, map, dt)
 			char_instance = map.chars[instance.magnet_char]
 		end
 
-		local char_center_x, char_center_y = char:get_center()
+		local char_center_x, char_center_y = char_instance:get_center()
 		local diffx = char_center_x - instance_center_x
 		local diffy = char_center_y - instance_center_y
 		local squared_distance = diffx * diffx + diffy * diffy
