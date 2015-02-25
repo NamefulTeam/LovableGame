@@ -10,7 +10,7 @@ folder = os.path.dirname(__file__)
 if folder == '':
 	folder = '.'
 
-file_formats = ['*.lua', '*.png', '*.ogg', '*.ttf']
+file_formats = ['*.lua', '*.png', '*.ogg', '*.ttf', '*.map']
 matches = []
 
 for root, dirs, files in os.walk(folder):

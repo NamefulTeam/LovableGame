@@ -29,6 +29,10 @@ function Crystal:make_instance(x, y)
 	return instance
 end
 
+function Crystal:copy(instance, offset_x, offset_y)
+	return self:make_instance(instance.x + offset_x, instance.y + offset_y)
+end
+
 function Crystal:update(instance, map, dt)
 	assert(instance ~= nil)
 	assert(map ~= nil)

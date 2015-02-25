@@ -54,4 +54,16 @@ function LinkedList:delete(value)
 	end
 end
 
+function LinkedList:iterate()
+	local current_item = self.first
+	local f = function(item)
+		local prev = current_item
+		if current_item ~= nil then
+			current_item = current_item.next
+		end
+		return prev
+	end
+	return f
+end
+
 return LinkedList

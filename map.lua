@@ -43,6 +43,16 @@ function make_ground(x, y, tile)
 	}
 end
 
+function copy_ground(ground, xoffset, yoffset)
+	assert(ground ~= nil)
+
+	return {
+		x = ground.x + xoffset,
+		y = ground.y + yoffset,
+		tile = ground.tile
+	}
+end
+
 function MapScreen:make_decoration(x, y, decorator_name, ...)
 	local decorator = self.map.field_object_types[decorator_name]
 
@@ -97,7 +107,9 @@ end
 function MapScreen:draw_decorations(instance_list)
 	local instance = instance_list.first
 	while instance ~= nil do
+		assert(instance.decorator_name ~= nil)
 		local decorator = self.map.field_object_types[instance.decorator_name]
+		assert(decorator ~= nil)
 
 		decorator:draw(instance)
 
@@ -212,6 +224,9 @@ function MapScreen:parse_mapfile(mapfile)
 	map.decorations_front = LinkedList()
 	map.musics = {}
 
+	local current = map
+	local blocks = {}
+
 	local index = 1
 	while maplist[index] do
 		elementlist = string.explode(maplist[index], ",")
@@ -222,12 +237,30 @@ function MapScreen:parse_mapfile(mapfile)
 			local music_path = elementlist[2]
 
 			table.insert(map.musics, music_path)
+		elseif elementlist[1] == "declare-block" then
+			local name = elementlist[2]
+
+			local block = {}
+			block.ground = {}
+			block.decorations_back = LinkedList()
+			block.decorations_front = LinkedList()
+
+			if blocks[name] == nil then
+				blocks[name] = { block }
+			else
+				table.insert(blocks[name], block)
+			end
+
+			current = block
+
+		elseif elementlist[1] == "make-map" then
+			current = map
 		elseif elementlist[1] == "tile" then
 			local tile_type = elementlist[2]
 			local x = tonumber(elementlist[3]) * 32
 			local y = tonumber(elementlist[4]) * 32
 
-			table.insert(map.ground, make_ground(x, y, tile_type))
+			table.insert(current.ground, make_ground(x, y, tile_type))
 		elseif elementlist[1] == "tile-range-x" then
 			local tile_type = elementlist[2]
 			local start_x = tonumber(elementlist[3]) * 32
@@ -236,7 +269,7 @@ function MapScreen:parse_mapfile(mapfile)
 			local y = tonumber(elementlist[6]) * 32
 
 			for x = start_x, end_x, interval_x do
-				table.insert(map.ground, make_ground(x, y, tile_type))
+				table.insert(current.ground, make_ground(x, y, tile_type))
 			end
 		elseif elementlist[1] == "tile-range-y" then
 			local tile_type = elementlist[2]
@@ -246,7 +279,7 @@ function MapScreen:parse_mapfile(mapfile)
 			local interval_y = tonumber(elementlist[6]) * 32
 
 			for y = start_y, end_y, interval_y do
-				table.insert(map.ground, make_ground(x, y, tile_type))
+				table.insert(current.ground, make_ground(x, y, tile_type))
 			end
 		elseif elementlist[1] == "field" then
 			local pos = elementlist[2]
@@ -254,7 +287,7 @@ function MapScreen:parse_mapfile(mapfile)
 
 			local x = tonumber(elementlist[4]) * 32
 			local y = tonumber(elementlist[5]) * 32
-			map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
+			current['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 		elseif elementlist[1] == "field-range-x" then
 			local pos = elementlist[2]
 			local obj_type = elementlist[3]
@@ -265,7 +298,7 @@ function MapScreen:parse_mapfile(mapfile)
 			local y = tonumber(elementlist[7]) * 32
 			
 			for x = start_x, end_x, interval_x do
-				map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
+				current['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 			end
 		elseif elementlist[1] == "field-range-y" then
 			local pos = elementlist[2]
@@ -277,7 +310,7 @@ function MapScreen:parse_mapfile(mapfile)
 			local interval_y = tonumber(elementlist[7]) * 32
 			
 			for y = start_y, end_y, interval_y do
-				map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
+				current['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
 			end
 		elseif elementlist[1] == "field-range-arc" then
 			local pos = elementlist[2]
@@ -296,7 +329,33 @@ function MapScreen:parse_mapfile(mapfile)
 				local x = center_x + relative_x
 				local y = center_y + relative_y
 
-				map['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
+				current['decorations_' .. pos]:insert_at_end(self:make_decoration(x, y, obj_type))
+			end
+		elseif elementlist[1] == "use" then
+			local name = elementlist[2]
+			local x = tonumber(elementlist[3]) * 32
+			local y = tonumber(elementlist[4]) * 32
+
+			local options = blocks[name]
+			assert(#options > 0)
+
+			local block = options[math.random(#options)]
+
+			for idx, value in pairs(block.ground) do
+				local copy = copy_ground(value, x, y)
+				table.insert(current.ground, copy)
+			end
+			for value in block.decorations_front:iterate() do
+				local decorator = map.field_object_types[value.decorator_name]
+				local copy = decorator:copy(value, x, y)
+				copy.decorator_name = value.decorator_name
+				current.decorations_front:insert_at_end(copy)
+			end
+			for value in block.decorations_back:iterate() do
+				local decorator = map.field_object_types[value.decorator_name]
+				local copy = decorator:copy(value, x, y)
+				copy.decorator_name = value.decorator_name
+				current.decorations_back:insert_at_end(copy)
 			end
 		end
 

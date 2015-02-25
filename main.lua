@@ -6,6 +6,8 @@ total_time = 0
 last_fps = 0
 
 function love.load()
+	math.randomseed(os.time())
+	
 	local KeyConfig = {}
 	KeyConfig.left = 'left'
 	KeyConfig.right = 'right'
